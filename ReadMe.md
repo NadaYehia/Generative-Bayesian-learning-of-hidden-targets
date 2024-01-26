@@ -2,7 +2,7 @@ Generative model for trajectory learning in a Bayesian framework
 
 This repo contains the building blocks of our model mouse
 
-  1- building the task environment, simulate an agent run, build action space and bound it by the  size of the arena in the task.
+  1- building the task environment, simulate an agent run, build action space and bound it by the size of the arena in the task.
 
   2- infer underlying control parameters and using it to generate likelihood for the Bayesian update.
 
