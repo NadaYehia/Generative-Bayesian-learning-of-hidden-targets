@@ -1,0 +1,24 @@
+%% 
+function [prior,As,Os,speed_step,r_bounds,c_bounds]= set_control_actions_space(speeds,...
+    omegas,arena)
+
+As=speeds;
+
+speed_step=max(As)/numel(As);
+
+Os=omegas;
+ 
+prior=ones(size(Os,2),size(As,2));
+
+ % mask the action space with the arena boundaries
+[mu_boundary,omega_boundary]=find_actions_bounds(arena);
+
+ % given the action boundary values, create a binary mask for the prior
+[bw_boundary,r_bounds,c_bounds]=convert_poly_to_mask(mu_boundary,omega_boundary,size(prior),As,Os);
+
+
+ prior=prior.*bw_boundary;
+ prior=prior./(sum(sum(prior)));
+
+
+end
