@@ -15,6 +15,6 @@ This repo contains the building blocks of our model mouse
 the program starts with running **main.m** which calls 
   1) **env_settings** to set the physical arena size and target locations & sizes. In addition it initialize some agent hyperparamteres like : the uncertanity in the trajectory parameters **sigma ridge**, mode of interception to get a reward **intercept mode** and number of trials per target location **blocks**
   2) **set control actions space** which constraint the action space (possible speeds and angles) given the physical limits of the arena.
-  3) **run random agent trial on a target** which compromises of the core blocks of the agent: **action sampler** (proportional or peak), **the generative model to connect these actions anchors in xy space**, 
+  3) **run random agent trial on a target** which compromises of the core blocks of the agent: **action sampler** (proportional+ nearest neighbor merger or peak sampler), **the generative model to connect these actions anchors in xy space**, 
   **compute the empirical likelihood** of this trajectory by finding the action parameters that peak at every point along its course, and lastly the **Bayesian update** of the action space posterior given the 
   outcome of this trajectory (reward or no reward) and our model likelihood. 
