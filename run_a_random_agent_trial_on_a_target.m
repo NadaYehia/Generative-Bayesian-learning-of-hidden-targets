@@ -1,7 +1,7 @@
 function [mu_spd,om_main,target_hit,anchors_no,mu_anchors_variance,...
          omega_anchors_variance,anchors_no_variance,posterior_support_mu_var,posterior_support_omega_var,...
           posterior_support_mu_entropy,posterior_support_omega_entropy]=    run_a_random_agent_trial_on_a_target (blocks,arena,target,target2,target_num,r_bounds,c_bounds,prior,initial_ancs,As,Os,sampler,...
-                                               dist_criterion,sigma_ridge,speed_step,draw_flg)
+                                               merging_criterion,sigma_ridge,speed_step,draw_flg)
 
 dd=sum(blocks(target_num));
 
@@ -89,7 +89,7 @@ for k=1:dd
 
    [posterior]=Bayes_update_for_actions_params(target_hit(k),mus_,omegas_,sigma_ridge,As,Os,prior);
    
-   [mu_anchors,omega_anchors,anchors_no(k)]= Sampling_next_actions(posterior,sampler,initial_ancs,As,Os,dist_criterion,r_bounds,c_bounds);
+   [mu_anchors,omega_anchors,anchors_no(k)]= Sampling_next_actions(posterior,sampler,initial_ancs,As,Os,merging_criterion,r_bounds,c_bounds);
    
     [mus_next,omegas_next,pos_xnext,pos_ynext]= Generative_model_connecting_anchors_with_smooth_traj(mu_anchors,omega_anchors,...
                                                  anchors_no(k),As,Os,sigma_ridge,speed_step);

@@ -13,7 +13,7 @@ sampler='proportional';
 draw_flg=0;
 target_num=2;
 
-dist_criterion=func_sigma_ridge_dist(1,sigma_ridge);
+merging_criterion=func_sigma_ridge_dist(1,sigma_ridge,speeds,angles);
 win=1;
 tic
 % start agents trials
@@ -28,7 +28,7 @@ parfor agent=1:ags
  [mu_spd,om_main,target_hit,anchors_no,mu_anchors_variance,...
          omega_anchors_variance,anchors_no_variance,posterior_support_mu_var,posterior_support_omega_var,...
           posterior_support_mu_entropy,posterior_support_omega_entropy]=    run_a_random_agent_trial_on_a_target (blocks,arena,target,target2,target_num,r_bounds,c_bounds,prior,initial_ancs,As,Os,sampler,...
-                                               dist_criterion,sigma_ridge,speed_step,draw_flg)
+                                               merging_criterion,sigma_ridge,speed_step,draw_flg)
 
 mu_pop_avg(agent,:) = mu_spd;
 hd_pop_avg(agent,:)=om_main;
