@@ -1,13 +1,6 @@
 %% 
-function [prior,As,Os,speed_step,r_bounds,c_bounds]= set_control_actions_space(speeds,...
-    omegas,arena)
+function [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,arena)
 
-As=speeds;
-
-speed_step=max(As)/numel(As);
-
-Os=omegas;
- 
 prior=ones(size(Os,2),size(As,2));
 
  % mask the action space with the arena boundaries

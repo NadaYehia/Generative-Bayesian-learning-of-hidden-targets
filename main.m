@@ -14,7 +14,7 @@ env.blocks=[60 150]; % number of trials per target: 1xn
 env.targets_centers=targets_xy; 
 env.targets_dimensions= targets_sizes; 
 env.arena_dimensions= arena;  % arena size 1x4
-targets=env.setup_targets_coord; % output nx2 struct: each row is a target
+targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
                                  % col1 are the x coords and col2 are the 
                                  % ycoords of the target corners
 
