@@ -38,7 +38,7 @@ sampler='proportional';
 % sampler='peak_sampler';
 draw_flg=1;
 target_num=2;
-
+k=1;
 merging_criterion= pixel_dist_to_normal_eucl_dist(k,sigma_ridge,res_x,res_y,range_x,range_y);
 
 [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,env.arena_dimensions);
