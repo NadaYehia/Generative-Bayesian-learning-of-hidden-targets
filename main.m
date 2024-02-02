@@ -1,19 +1,31 @@
 
 clear all
 clc
-% setup the environment and action space
+% setup the environment: the arena size, number of target, special objects
+% (e.g. obstacles) *to be added*
 [intercept,sigma_ridge,arena,blocks,target,target2]=env_settings('anypt',20,[60 150],10,250,-250,250,50,50,50,50);
 
-% set some initial variables.
-ags=50;
-speeds=[1:2:1000];
-angles=[-pi/2:2*pi/1000:pi/2];
+ags=50;   %number of agents to run
+n=500;    %number of samples in speed space and angle space.
+max_speed=1000;  %maximum speed value in the action space.
+min_speed=1;     % minimum speed value in the action space
+max_angle=-pi/2;  %maximum angle in the action space (relative to the vertical axis) 
+min_angle=pi/2;   %minimum angle in the action space (relative to the vertical axis)
+
+speeds=linspace(min_speed,max_speed,n);
+angles=linspace(min_angle,max_angle,n);
+res_x= round( (max_speed-min_speed)/n );
+res_y= round( (max_angle-min_angle)/n );
+range_x=max_speed-min_speed;
+range_y=max_angle-min_angle;
+
 sampler='proportional'; 
 % sampler='peak_sampler';
-draw_flg=0;
+draw_flg=1;
 target_num=2;
 
-merging_criterion=func_sigma_ridge_dist(1,sigma_ridge,speeds,angles);
+merging_criterion= pixel_dist_to_normal_eucl_dist(k,sigma_ridge,res_x,res_y,range_x,range_y);
+
 win=1;
 tic
 % start agents trials
