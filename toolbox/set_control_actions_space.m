@@ -1,10 +1,10 @@
 %% 
-function [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,arena)
+function [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,arena,clearnce)
 
 prior=ones(size(Os,2),size(As,2));
 
  % mask the action space with the arena boundaries
-[mu_boundary,omega_boundary]=find_actions_bounds(arena);
+[mu_boundary,omega_boundary]=find_actions_bounds(arena,clearnce);
 
  % given the action boundary values, create a binary mask for the prior
 [bw_boundary,r_bounds,c_bounds]=convert_poly_to_mask(mu_boundary,omega_boundary,size(prior),As,Os);
