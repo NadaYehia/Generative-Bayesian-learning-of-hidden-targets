@@ -1,4 +1,4 @@
-function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,dist_criterion,r_bounds,c_bounds)
+function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,r_bounds,c_bounds)
 
 percentile=0.6;
 % find all peaks in a 3x3 neighborhood around every pixel in the posterior

@@ -5,6 +5,7 @@ classdef environment
       targets_centers
       targets_dimensions
       arena_dimensions
+      
    end
    methods 
       % create an obstacle?
@@ -26,7 +27,14 @@ classdef environment
                targets(i).y=py;
           end
 
+          
 
       end
+
+     
+
+
+
+
    end
 end
