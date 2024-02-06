@@ -47,9 +47,6 @@ for n=1:size(mu_anchors,2)-1
     heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ));
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
-
-    m=(4*tol)/T;
-
     r1=k*dy_* ( (pi^2)-(4* (tol^2)) );
     q1= pi*T*(cos(tol)*sin(heading_offset));
     vmax_y= r1/q1;
@@ -72,7 +69,7 @@ for n=1:size(mu_anchors,2)-1
     speed=speed./sum(speed);
     speed= (vmax).*speed;
 
-     heading= (m.*t1)+( (heading_offset) -tol);
+     heading= ( ((4*tol)/T) .*t1)+( (heading_offset) -tol);
 
     pos_x(1)=x_(n);
     pos_y(1)=y_(n);

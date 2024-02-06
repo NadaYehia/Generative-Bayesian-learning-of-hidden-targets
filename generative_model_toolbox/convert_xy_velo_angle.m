@@ -9,7 +9,6 @@ speed= [sin(w.*t1)];
 
 k=sum(speed);
 
-% figure;
 for i=1:numel(x_op)
 
     heading_offset= atan2(y_op(i),x_op(i)); % this goes from -pi/2 to pi/2, as omega in our model.
