@@ -4,7 +4,7 @@ clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
 
-targets_xy=[10 250; -200 250]; % 2Dcenters per target: nx2
+targets_xy=[10 250; 200 250]; % 2Dcenters per target: nx2
 targets_sizes=[60 60; 60 60];  % target sizes in x&y: nx2
 arena_size=[-400 400 0 600];
 arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
@@ -32,7 +32,7 @@ As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 sampler='proportional'; 
 % sampler='peak_sampler';
-draw_flg=0;
+draw_flg=1;
 target_num=2;
 k=1;
 merging_criterion= sigma_ridge/n; % converting sigma ridge from pixels distance to normalized dist.
@@ -40,7 +40,7 @@ win=1;
 tic
 
 % start agents trials
-parfor agent=1:ags
+for agent=1:ags
 
 initial_ancs=10;
 dd=sum(env.blocks(target_num));
