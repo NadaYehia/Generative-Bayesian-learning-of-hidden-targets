@@ -105,14 +105,9 @@ for k=1:dd
        [~,min_speed_anchor]=min(mu_anchors);
        initial_hd=omega_anchors(min_speed_anchor);
     
-       % apply tsp on the anchors points
+      %% the generative model connecting anchors with a smooth trajectory 
        Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',initial_ancs+1,As,Os);
-         
-       % reorder the anchors according to the TSP list order
        [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-    
-       % interpolate between the ordered anchors actions, retrieve the full
-       % x,y list of points AND the model loops actions params peaking at these points.
        [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
     
        % keep track of mean heading and speeds
@@ -127,9 +122,9 @@ for k=1:dd
      end
 
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,target_hit(k),hit_time(k));
-
+%% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
    [posterior]=Bayes_update_for_actions_params(target_hit(k),mus_,omegas_,sigma_ridge,As,Os,prior);
-   
+%% sampler function for the next actions calling either: proportional or peak sampler
    [mu_anchors,omega_anchors,anchors_no(k)]= Sampling_next_actions(posterior,sampler,initial_ancs,As,Os,merging_criterion,r_bounds,c_bounds);
    
    
@@ -138,21 +133,17 @@ for k=1:dd
  
      if(anchors_no(k)>1)
     
-         % apply tsp on the anchors points
-         Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);
-         
-         % reorder the anchors according to the TSP list order
+         %% the generative model connecting anchors with a smooth trajectory 
+         Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);       
          [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-    
-          % interpolate between the ordered anchors actions
-          [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
      else
          mu_anchors=[0 mu_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
+         %% the generative model connecting anchors with a smooth trajectory 
          [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
          
-    
-     end
+      end
     
    prior=posterior;
    
@@ -200,12 +191,6 @@ for k=1:dd
   omegas_=omegas_new;
 
 end
-
-
-
-
-
-
 
 %% 
 mu_pop_avg(agent,:) = mu_spd;
