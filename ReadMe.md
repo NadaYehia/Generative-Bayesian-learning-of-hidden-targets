@@ -1,6 +1,6 @@
 Generative model for trajectory learning in a Bayesian framework
 
-The code is optimised and paralleised to allow fast execution. It takes ~1.5minutes to simulate 50 agents. 
+The code is optimised and paralleised to allow fast execution. It takes ~1.5 minutes to simulate 50 agents. 
 
 the program starts with running **main.m** which comprises of the following 
   1) **Environment** class that has the attributes of the physical arena size and target locations & sizes, mode of interception to get a reward **intercept mode** and number of trials per target location 
