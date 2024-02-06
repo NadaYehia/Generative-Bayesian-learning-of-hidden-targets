@@ -59,7 +59,7 @@ lin_idx1=sub2ind(size(posterior),omegas,mus);
 lin_idx_bounds=sub2ind(size(posterior),r_bounds,c_bounds);
 % add the indices for the first row, last row,, first column
 ind_first_row= sub2ind(size(posterior),repmat(1,size(posterior,2),1),(1:size(posterior,2))');
-ind_last_row= sub2ind(size(posterior),repmat(501,size(posterior,2),1),(1:size(posterior,2))');
+ind_last_row= sub2ind(size(posterior),repmat(size(posterior,1),size(posterior,2),1),(1:size(posterior,2))');
 
 
 lin_idx_bounds=[lin_idx_bounds, [1:size(posterior,1)], ind_first_row', ind_last_row'];
