@@ -1,8 +1,7 @@
-function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce)
+function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env)
 
 T=1000;
 k=(T)/pi;
-tol=clearnce;
 arena=env.arena_dimensions;
 a=2;
 speed_noise=gamrnd(a*(1.6*sigma_ridge*speed_step),1/a);
@@ -17,14 +16,14 @@ y_=[];
 
 for f=2:numel(mu_anchors)-1
 
-    theta= (omega_anchors(f)) +(pi/2);
+    theta= (omega_anchors(f)) ;
 
-    r=pi*T*(cos(tol)*cos(theta))* (mu_anchors(f)+speed_noise);
-    q=k* ( (pi^2)-(4* (tol^2)) ); 
+    r=-1*T*(sin(theta))* (mu_anchors(f)+speed_noise);
+    q=k* (4 ); 
     x_(f)=r/q;
 
-    l=pi*T*(cos(tol)*sin(theta))* (mu_anchors(f)+speed_noise);
-    m=k* ( (pi^2)-(4* (tol^2)) ); 
+    l=1*T*(cos(theta))* (mu_anchors(f)+speed_noise);
+    m=k* ( 4 ); 
     y_(f)=l/m;
 
 end
@@ -44,18 +43,16 @@ x_(end+1)=0; y_(end+1)=0;
 for n=1:size(mu_anchors,2)-1
 
     % first compute the normalized ecul. distance between anchors n and n+1
-    heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ));
+    heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ))-(pi/2);
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
 
-    m=(4*tol)/T;
-
-    r1=k*dy_* ( (pi^2)-(4* (tol^2)) );
-    q1= pi*T*(cos(tol)*sin(heading_offset));
+    r1=k*dy_* ( 4 );
+    q1= 1*T*(cos(heading_offset));
     vmax_y= r1/q1;
 
-    r=k*dx_* ( (pi^2)-(4* (tol^2)) );
-    q= pi*T*(cos(tol)*cos(heading_offset));
+    r=k*dx_* ( 4 );
+    q= -1*T*(sin(heading_offset));
     vmax_x= r/q;
 
     if(dx_==0)
@@ -64,15 +61,14 @@ for n=1:size(mu_anchors,2)-1
         vmax=vmax_x;
     end
 
-
-    % use the functional form to produce x,y points in space
+    % use the generative model to connect neighbor anchors
     w=(2*pi)/(T);
     t1=[0:T/2];
     speed= [sin(w.*t1)];
     speed=speed./sum(speed);
     speed= (vmax).*speed;
 
-     heading= (m.*t1)+( (heading_offset) -tol);
+     heading= ( ((2*pi)/T) .*t1)+( (heading_offset));
 
     pos_x(1)=x_(n);
     pos_y(1)=y_(n);
@@ -105,7 +101,7 @@ pos_y=[];
 pos_x=[];
 
 end
- [mu,omega]= convert_xy_velo_angle(x_op,y_op,tol);
+ [mu,omega]= convert_xy_velo_angle(x_op,y_op);
 
 
 end
