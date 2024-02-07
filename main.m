@@ -41,7 +41,7 @@ win=1;
 tic
 
 % start agents trials
-for agent=1:ags
+parfor agent=1:ags
 
 initial_ancs=10;
 dd=sum(env.blocks(target_num));
