@@ -4,7 +4,7 @@ clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
 
-targets_xy=[10 250; -200 250]; % 2Dcenters per target: nx2
+targets_xy=[10 250; 300 250]; % 2Dcenters per target: nx2
 targets_sizes=[60 60; 60 60];  % target sizes in x&y: nx2
 arena_size=[-400 400 0 600];
 arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
@@ -41,7 +41,7 @@ win=1;
 tic
 
 % start agents trials
-parfor agent=1:ags
+for agent=1:ags
 
 initial_ancs=10;
 dd=sum(env.blocks(target_num));
