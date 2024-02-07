@@ -4,7 +4,8 @@ T=1000;
 k=(T)/pi;
 arena=env.arena_dimensions;
 a=2;
-speed_noise=gamrnd(a*(1.6*sigma_ridge*speed_step),1/a);
+c=0.25; %1.6
+speed_noise=gamrnd(a*(c*sigma_ridge*speed_step),1/a);
 % speed_noise=0;
 
 x_op=[];
