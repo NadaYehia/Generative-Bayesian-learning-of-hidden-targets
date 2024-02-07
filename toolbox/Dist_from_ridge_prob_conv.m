@@ -10,7 +10,7 @@ for s=1:numel(y_)
 end
 
 
-sz=sigma*2*max(size(L));
+sz=2*max(size(L));
 h=fspecial('gaussian',sz,sigma);
 L1=conv2(L,h,'same');
 
