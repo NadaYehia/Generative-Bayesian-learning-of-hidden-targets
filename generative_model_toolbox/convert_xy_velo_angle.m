@@ -15,13 +15,13 @@ for i=1:numel(x_op)
 
     omega(i)=heading_offset-(pi/2);
 
-    r1=k*y_op(i)* ( (pi^2)-(4* (tol^2)) );
-    q1= pi*T*(cos(tol)*sin(heading_offset));
-    mu_y= r1/q1;
+    r1=(T*cos(heading_offset))/4;
+    q= (pi*cos(tol)) / ( ((pi^2)/4)-(tol^2) );
+    mu_x= (k*x_op(i))/(r1*q);
 
-    r=k*x_op(i)* ( (pi^2)-(4* (tol^2)) );
-    q= pi*T*(cos(tol)*cos(heading_offset));
-    mu_x= r/q;
+    r=  (T*sin(heading_offset))/4;
+    mu_y= (k*y_op(i)) /(r*q);
+
 
     mu(i)=mu_x;
 

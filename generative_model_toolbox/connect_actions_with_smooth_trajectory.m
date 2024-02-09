@@ -19,13 +19,12 @@ for f=2:numel(mu_anchors)-1
 
     theta= (omega_anchors(f)) +(pi/2);
 
-    r=pi*T*(cos(tol)*cos(theta))* (mu_anchors(f)+speed_noise);
-    q=k* ( (pi^2)-(4* (tol^2)) ); 
-    x_(f)=r/q;
+    r=(T*cos(theta))/4 ;
+    q=(pi*cos(tol))/( ((pi^2)/4)-(tol^2) ); 
+    x_(f)=((mu_anchors(f)+speed_noise)*r*q)/k;
 
-    l=pi*T*(cos(tol)*sin(theta))* (mu_anchors(f)+speed_noise);
-    m=k* ( (pi^2)-(4* (tol^2)) ); 
-    y_(f)=l/m;
+    l= (T*sin(theta))/4;
+    y_(f)=((mu_anchors(f)+speed_noise)*l*q)/k;
 
 end
 
@@ -47,13 +46,13 @@ for n=1:size(mu_anchors,2)-1
     heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ));
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
-    r1=k*dy_* ( (pi^2)-(4* (tol^2)) );
-    q1= pi*T*(cos(tol)*sin(heading_offset));
-    vmax_y= r1/q1;
 
-    r=k*dx_* ( (pi^2)-(4* (tol^2)) );
-    q= pi*T*(cos(tol)*cos(heading_offset));
-    vmax_x= r/q;
+    r1=(T*sin(heading_offset))/4;
+    q=(pi*cos(tol))/( ((pi^2)/4)-(tol^2) );
+    vmax_y= (dy_*k)/(r1*q);
+
+    r=(T*cos(heading_offset))/4;
+    vmax_x= (dx_*k)/(r*q);
 
     if(dx_==0)
         vmax=vmax_y;
