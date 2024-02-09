@@ -3,7 +3,7 @@ clear all
 clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
-
+close all
 targets_xy=[10 250; 200 250]; % 2Dcenters per target: nx2
 targets_sizes=[60 60; 60 60];  % target sizes in x&y: nx2
 arena_size=[-400 400 0 600];
@@ -30,9 +30,9 @@ min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical 
 speed_step=round((max_speed-min_speed)/n);
 As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=0.5; %loop width in radians
-% sampler='proportional'; 
-sampler='peak_sampler';
+clearnce=1.57; %loop width in radians
+sampler='proportional'; 
+% sampler='peak_sampler';
 draw_flg=0;
 target_num=2;
 kmerge=1;
