@@ -11,15 +11,19 @@ x_op=[];
 y_op=[];
 x_=[];
 y_=[];
+qn=(pi*cos(tol));
+qd=( ((pi^2)/4)-(tol^2) );
+q=qn/qd; 
+
+
 % for every anchor, sum the xand y to the maximum points and this will be
 % x_and y_
 
 for f=2:numel(mu_anchors)-1
 
     theta= (omega_anchors(f)) +(pi/2);
-
+    
     r=(T*cos(theta))/4 ;
-    q=(pi*cos(tol))/( ((pi^2)/4)-(tol^2) ); 
     x_(f)=((mu_anchors(f)+speed_noise)*r*q)/k;
 
     l= (T*sin(theta))/4;
@@ -47,7 +51,6 @@ for n=1:size(mu_anchors,2)-1
     dy_=y_(n+1)-y_(n);
 
     r1=(T*sin(heading_offset))/4;
-    q=(pi*cos(tol))/( ((pi^2)/4)-(tol^2) );
     vmax_y= (dy_*k)/(r1*q);
 
     r=(T*cos(heading_offset))/4;
@@ -59,7 +62,7 @@ for n=1:size(mu_anchors,2)-1
         vmax=vmax_x;
     end
 
-
+ 
     % use the functional form to produce x,y points in space
     w=(2*pi)/(T);
     t1=[0:T/2];
@@ -101,6 +104,7 @@ pos_x=[];
 
 end
  [mu,omega]= convert_xy_velo_angle(x_op,y_op,tol);
+ %% 
 
 
 end
