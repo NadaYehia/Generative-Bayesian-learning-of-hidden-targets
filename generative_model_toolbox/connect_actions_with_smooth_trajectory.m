@@ -53,7 +53,7 @@ for n=1:size(mu_anchors,2)-1
     r=(T*cos(heading_offset))/4;
     vmax_x= (dx_*k)/(r*q);
 
-    if(dx_==0)
+    if(dx_<1e-13)
         vmax=vmax_y;
     else
         vmax=vmax_x;
