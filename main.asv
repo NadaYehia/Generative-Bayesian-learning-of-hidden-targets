@@ -137,12 +137,12 @@ for k=1:dd
          %% the generative model connecting anchors with a smooth trajectory 
          Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);       
          [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
      else
          mu_anchors=[0 mu_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce);
          
       end
     

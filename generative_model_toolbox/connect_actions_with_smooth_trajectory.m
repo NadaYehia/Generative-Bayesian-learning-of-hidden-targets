@@ -1,13 +1,11 @@
-function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce)
+function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift)
 
 T=1000;
 k=(T)/pi;
 tol=clearnce;
 arena=env.arena_dimensions;
 a=2;
-c=0.25;
-speed_noise=gamrnd(a*(c*sigma_ridge*speed_step),1/a);
-% speed_noise=0;
+speed_noise=gamrnd(a*(c_drift*sigma_ridge*speed_step),1/a);
 
 x_op=[];
 y_op=[];
