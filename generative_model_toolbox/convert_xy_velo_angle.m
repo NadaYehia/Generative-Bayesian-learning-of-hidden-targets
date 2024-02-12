@@ -23,12 +23,14 @@ for i=1:numel(x_op)
     q= 1*T*(cos(heading_offset));
     mu_x= r/q;
 
-    mu(i)=mu_x;
-
-   
-
-
     
+     if( abs( abs(heading_offset) - pi/2) <1e-13  )
+        mu(i)=mu_y;
+    else
+        mu(i)=mu_x;
+    end
+
+       
 end
 
 
