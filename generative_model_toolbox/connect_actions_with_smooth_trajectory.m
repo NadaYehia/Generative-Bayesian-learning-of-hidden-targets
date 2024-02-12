@@ -17,13 +17,13 @@ y_=[];
 
 for f=2:numel(mu_anchors)-1
 
-    theta= (omega_anchors(f)) ;
+    theta= (omega_anchors(f)) +(pi/2);
 
-    r=-1*T*(sin(theta))* (mu_anchors(f)+speed_noise);
+    r=1*T*(cos(theta))* (mu_anchors(f)+speed_noise);
     q=k* (4 ); 
     x_(f)=r/q;
 
-    l=1*T*(cos(theta))* (mu_anchors(f)+speed_noise);
+    l=1*T*(sin(theta))* (mu_anchors(f)+speed_noise);
     m=k* ( 4 ); 
     y_(f)=l/m;
 
@@ -44,16 +44,16 @@ x_(end+1)=0; y_(end+1)=0;
 for n=1:size(mu_anchors,2)-1
 
     % first compute the normalized ecul. distance between anchors n and n+1
-    heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ))-(pi/2);
+    heading_offset= (atan2( y_(n+1)-y_(n),x_(n+1)-x_(n) ));
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
 
     r1=k*dy_* ( 4 );
-    q1= 1*T*(cos(heading_offset));
+    q1= 1*T*(sin(heading_offset));
     vmax_y= r1/q1;
 
     r=k*dx_* ( 4 );
-    q= -1*T*(sin(heading_offset));
+    q= 1*T*(cos(heading_offset));
     vmax_x= r/q;
 
     if(dx_==0)
@@ -69,7 +69,7 @@ for n=1:size(mu_anchors,2)-1
     speed=speed./sum(speed);
     speed= (vmax).*speed;
 
-     heading= ( ((2*pi)/T) .*t1)+( (heading_offset));
+     heading= ( ((2*pi)/T) .*t1)+( (heading_offset-(pi/2)));
 
     pos_x(1)=x_(n);
     pos_y(1)=y_(n);
