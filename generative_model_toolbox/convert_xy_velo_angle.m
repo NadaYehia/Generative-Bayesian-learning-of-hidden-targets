@@ -6,7 +6,7 @@ function [mu, omega]=convert_xy_velo_angle(x_op,y_op)
 w=(2*pi)/(T);
 t1=[0:(T/2)];
 speed= [sin(w.*t1)]; 
-k=sum(speed);
+k=(T)/pi;
 
 
 for i=1:numel(x_op)
