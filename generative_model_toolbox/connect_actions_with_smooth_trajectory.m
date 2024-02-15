@@ -11,11 +11,8 @@ x_op=[];
 y_op=[];
 x_=[];
 y_=[];
-qn=(pi*cos(tol));
-qd=( ((pi^2)/4)-(tol^2) );
-q=qn/qd; 
-
-
+ 
+epsi=(tol-pi/2);
 % for every anchor, sum the xand y to the maximum points and this will be
 % x_and y_
 
@@ -23,11 +20,11 @@ for f=2:numel(mu_anchors)-1
 
     theta= (omega_anchors(f)) +(pi/2);
     
-    r=(T*cos(theta))/4 ;
-    x_(f)=((mu_anchors(f)+speed_noise)*r*q)/k;
+    E_d= ((mu_anchors(f)+speed_noise)*(pi^2)*sinc(epsi/pi))/((4*pi)+(4*(epsi)));
 
-    l= (T*sin(theta))/4;
-    y_(f)=((mu_anchors(f)+speed_noise)*l*q)/k;
+    x_(f)=E_d*cos(theta);
+
+    y_(f)=E_d*sin(theta);
 
 end
 
@@ -50,18 +47,10 @@ for n=1:size(mu_anchors,2)-1
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
 
-    r1=(T*sin(heading_offset))/4;
-    vmax_y= (dy_*k)/(r1*q);
-
-    r=(T*cos(heading_offset))/4;
-    vmax_x= (dx_*k)/(r*q);
-
-
-    if( abs( abs(heading_offset) - pi/2) <1e-13  )
-        vmax=vmax_y;
-    else
-        vmax=vmax_x;
-    end
+    eucl_dist=sqrt(dx_^2 +dy_^2);
+    vmax_n=eucl_dist*((4*epsi)+(4*pi));
+    vmax_d= (pi^2)*sinc(epsi/pi);
+    vmax= vmax_n/vmax_d;
 
  
     % use the functional form to produce x,y points in space
