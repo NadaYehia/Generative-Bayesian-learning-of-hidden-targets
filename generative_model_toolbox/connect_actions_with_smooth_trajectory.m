@@ -48,19 +48,10 @@ for n=1:size(mu_anchors,2)-1
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
 
-    r1=k*dy_* ( 4 );
-    q1= 1*T*(sin(heading_offset));
-    vmax_y= r1/q1;
+    eucli_dist=sqrt((dx_^2)+(dy_^2));
+    vmax_n=4*eucli_dist;
+    vmax=vmax_n/pi;
 
-    r=k*dx_* ( 4 );
-    q= 1*T*(cos(heading_offset));
-    vmax_x= r/q;
-
-     if( abs( abs(heading_offset) - pi/2) <1e-13  )
-        vmax=vmax_y;
-    else
-        vmax=vmax_x;
-    end
 
     % use the generative model to connect neighbor anchors
     w=(2*pi)/(T);

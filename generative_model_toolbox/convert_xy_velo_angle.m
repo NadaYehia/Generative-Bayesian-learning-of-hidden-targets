@@ -15,20 +15,9 @@ for i=1:numel(x_op)
 
     omega(i)=heading_offset-(pi/2);
 
-    r1=k*y_op(i)* ( 4 );
-    q1= 1*T*(sin(heading_offset));
-    mu_y= r1/q1;
-
-    r=k*x_op(i)* ( 4 );
-    q= 1*T*(cos(heading_offset));
-    mu_x= r/q;
-
-    
-     if( abs( abs(heading_offset) - pi/2) <1e-13  )
-        mu(i)=mu_y;
-    else
-        mu(i)=mu_x;
-    end
+    eucli_dist=sqrt((x_op(i)^2)+(y_op(i)^2));
+    vmax_n=4*eucli_dist;
+    mu(i)=vmax_n/pi;
 
        
 end
