@@ -31,17 +31,17 @@ speed_step=round((max_speed-min_speed)/n);
 angle_step=((max_angle-min_angle)/n);
 As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=pi/2; %loop width in radians 
-% sampler='proportional';
-sampler='peak_sampler';
-c_drift=0.25; %1.6
+clearnce=0.5; %loop width in radians 
+sampler='proportional';
+% sampler='peak_sampler';
+c_drift=1.6; %0.25
 draw_flg=0;
 target_num=2;
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 win=1;
-noise_sc_mu= (sigma_ridge*speed_step)*0;   % arbitrary distance units/sec
-noise_sc_om= (sigma_ridge*angle_step)*0; % in radians
+noise_sc_mu= (sigma_ridge*speed_step)*1;   % arbitrary distance units/sec
+noise_sc_om= (sigma_ridge*angle_step)*1; % in radians
 tic
 
 % start agents trials
