@@ -28,9 +28,10 @@ min_speed=1;     % minimum speed value in the action space
 max_angle=pi/2;  %maximum angle in the action space (relative to the vertical axis) 
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
 speed_step=round((max_speed-min_speed)/n);
+angle_step=((max_angle-min_angle)/n);
 As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=1.57; %loop width in radians %0.5
+clearnce=pi/2; %loop width in radians 
 % sampler='proportional';
 sampler='peak_sampler';
 c_drift=0.25; %1.6
@@ -39,6 +40,8 @@ target_num=2;
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 win=1;
+noise_sc_mu= (sigma_ridge*speed_step)*0;   % arbitrary distance units/sec
+noise_sc_om= (sigma_ridge*angle_step)*0; % in radians
 tic
 
 % start agents trials
@@ -102,6 +105,10 @@ for k=1:dd
     
        mu_anchors=As(mu_temp_ind);
        omega_anchors=Os(omega_temp_ind);
+       
+       %% add noise to both sampled controls parameters:
+       mu_anchors=mu_anchors+ (noise_sc_mu.*randn(1,numel(mu_anchors)));
+       omega_anchors=omega_anchors+ (noise_sc_om.*randn(1,numel(omega_anchors)));
                                          
        [~,min_speed_anchor]=min(mu_anchors);
        initial_hd=omega_anchors(min_speed_anchor);
@@ -128,7 +135,10 @@ for k=1:dd
 %% sampler function for the next actions calling either: proportional or peak sampler
    [mu_anchors,omega_anchors,anchors_no(k)]= Sampling_next_actions(posterior,sampler,initial_ancs,As,Os,merging_criterion,r_bounds,c_bounds);
    
-   
+%% add noise to both sampled controls parameters:
+   mu_anchors=mu_anchors+ (noise_sc_mu.*randn(1,numel(mu_anchors)));
+   omega_anchors=omega_anchors+ (noise_sc_om.*randn(1,numel(omega_anchors)));
+
    [~,min_speed_anchor]=min(mu_anchors);
    initial_hd=omega_anchors(min_speed_anchor);
  
