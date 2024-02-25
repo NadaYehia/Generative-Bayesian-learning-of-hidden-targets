@@ -1,10 +1,10 @@
-function [mu, omega]=convert_xy_velo_angle(x_op,y_op,tol)
+function [mu, omega]=convert_xy_velo_angle(x_op,y_op,tol,T)
  
 omega=[];
 mu=[];
-T=1000;
 k=(T)/pi;
 epsi=(tol-pi/2);
+
 for i=1:numel(x_op)
 
     heading_offset= atan2(y_op(i),x_op(i)); 

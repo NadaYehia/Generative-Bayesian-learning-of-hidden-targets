@@ -90,7 +90,7 @@ function Gsol= connect_anchors_tsp(mu_anchors,omega_anchors,nStops,As,Omegas)
         % How many subtours this time?
         tourIdxs = conncomp(Gsol);
         numtours = max(tourIdxs); % number of subtours
-        fprintf('# of subtours: %d\n',numtours)
+%         fprintf('# of subtours: %d\n',numtours)
        end
 
 

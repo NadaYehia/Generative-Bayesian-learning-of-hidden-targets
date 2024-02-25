@@ -1,6 +1,6 @@
-function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift)
+function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T)
 
-T=1000;
+
 k=(T)/pi;
 tol=clearnce;
 arena=env.arena_dimensions;
@@ -93,7 +93,7 @@ pos_y=[];
 pos_x=[];
 
 end
- [mu,omega]= convert_xy_velo_angle(x_op,y_op,tol);
+ [mu,omega]= convert_xy_velo_angle(x_op,y_op,tol,T);
  %% 
 
 
