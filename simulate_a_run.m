@@ -1,4 +1,4 @@
-function [target_hit,hit_time]=simulate_a_run(pos_x,pos_y,target_num,env,target_hit,hit_time)
+function [target_hit,hit_time]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time)
 
     arena=env.arena_dimensions;
     for t=2:size(pos_x,2)
@@ -30,6 +30,9 @@ function [target_hit,hit_time]=simulate_a_run(pos_x,pos_y,target_num,env,target_
                 hit_time= t;
             end
             break; 
+
+        else 
+            target_hit=0;
         end
 
     end
