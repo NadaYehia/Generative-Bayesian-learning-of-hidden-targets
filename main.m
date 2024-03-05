@@ -32,8 +32,11 @@ angle_step=((max_angle-min_angle)/n);
 As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
+
 % sampler='proportional';
+
 sampler='peak_sampler';
+
 c_drift=0.6; %0.25,1.6,0.6
 draw_flg=0;
 target_order=[1, 2];
@@ -49,6 +52,11 @@ h2_caching=0.9;
 cache_flag=0;
 caching_times=zeros(ags,sum(env.blocks(target_order)));
 reward_entropy_samples=10;
+
+cache_logic="global";
+
+% cache_logic="local";
+
 tic
 
 % start agents trials
@@ -142,7 +150,13 @@ for k=1:dd
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 
 %% caching logic, based on posterior and reward rate signal entropies
-   [prior,cache_flag,t_lst_caching]=caching(target_hit, prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
+
+   if (strcmp(cache_logic,'global'))
+        [prior,cache_flag,t_lst_caching]=caching(target_hit, prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
+   else
+        [prior,cache_flag,t_lst_caching]=caching_2(target_hit,prior,As,Os,arena,clearnce,T,h1_caching,h2_caching,t_lst_caching,reward_entropy_samples);
+   end
+  
    % store cache time for every run and agent.
    caching_times_agent(k)=t_lst_caching;
    
