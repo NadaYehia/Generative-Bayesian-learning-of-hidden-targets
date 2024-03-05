@@ -47,21 +47,23 @@ T=50;
 h1_caching=0.6;
 h2_caching=0.9;
 cache_flag=0;
+caching_times=zeros(ags,sum(env.blocks(target_order)));
+reward_entropy_samples=10;
 tic
 
 % start agents trials
 parfor agent=1:ags
 
+dd=sum(env.blocks(target_order));
 t_lst_caching=1;
 initial_ancs=10;
-dd=sum(env.blocks(target_order));
 mu_spd=zeros(1, dd );
+caching_times_agent=zeros(1,dd);
 om_main=zeros(1, dd );    
 target_hit=[];
 hit_time = ones(1, dd  ); 
 anchors_no= zeros(1,dd);
 [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,env.arena_dimensions,clearnce,T);
-
 mu_anchors_variance={};
 omega_anchors_variance={};
 anchors_no_variance={};
@@ -141,6 +143,8 @@ for k=1:dd
 
 %% caching logic, based on posterior and reward rate signal entropies
    [prior,cache_flag,t_lst_caching]=caching(target_hit, prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
+   % store cache time for every run and agent.
+   caching_times_agent(k)=t_lst_caching;
    
    if(~cache_flag)
      %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
@@ -276,6 +280,7 @@ mu_pop_avg(agent,:) = mu_spd;
 hd_pop_avg(agent,:)=om_main;
 corr_pop_avg(agent,:) = target_hit;
 anchors_no_pop(agent,:)=anchors_no;
+caching_times(agent,:)=caching_times_agent;
 
 % compute posterior support (as variance in its samples or entropy) to
 % compare it with variance in executed anchors
