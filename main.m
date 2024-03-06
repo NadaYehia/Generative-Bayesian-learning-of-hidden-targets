@@ -53,9 +53,9 @@ cache_flag=0;
 caching_times=zeros(ags,sum(env.blocks(target_order)));
 reward_entropy_samples=10;
 
-cache_logic="global";
+% cache_logic="global";
 
-% cache_logic="local";
+cache_logic="local";
 
 tic
 
@@ -152,10 +152,10 @@ for k=1:dd
 %% caching logic, based on posterior and reward rate signal entropies
 
    if (strcmp(cache_logic,'global'))
-        [prior,cache_flag,t_lst_caching]=caching(target_hit, prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
+        [prior,cache_flag,t_lst_caching]=caching(target_hit,prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
    else
         
-        [prior,cache_flag,t_lst_caching]=caching_2(target_hit,prior,As,Os,arena,clearnce,T,h1_caching,h2_caching,t_lst_caching,reward_entropy_samples);
+        [prior,cache_flag,t_lst_caching]=caching_2(target_hit,prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching,reward_entropy_samples);
    end
   
    % store cache time for every run and agent.
