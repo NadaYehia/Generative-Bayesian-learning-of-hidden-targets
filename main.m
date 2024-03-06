@@ -154,6 +154,7 @@ for k=1:dd
    if (strcmp(cache_logic,'global'))
         [prior,cache_flag,t_lst_caching]=caching(target_hit, prior,As,Os,env.arena_dimensions,clearnce,T,h1_caching,h2_caching,t_lst_caching);
    else
+        
         [prior,cache_flag,t_lst_caching]=caching_2(target_hit,prior,As,Os,arena,clearnce,T,h1_caching,h2_caching,t_lst_caching,reward_entropy_samples);
    end
   
