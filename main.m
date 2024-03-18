@@ -61,7 +61,7 @@ cache_logic="local";
 tic
 
 % start agents trials
-for agent=1:ags
+parfor agent=1:ags
 
 dd=sum(env.blocks(target_order));
 t_lst_caching=1;
