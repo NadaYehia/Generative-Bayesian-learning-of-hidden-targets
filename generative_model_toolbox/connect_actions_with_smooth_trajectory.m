@@ -1,11 +1,19 @@
-function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T)
+function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As)
 
 
 k=(T)/pi;
 tol=clearnce;
 arena=env.arena_dimensions;
-a=2;
-speed_noise=gamrnd(a*(c_drift*sigma_ridge*speed_step),1/a);
+
+beta=1;
+
+for ad=2:numel(mu_anchors)-1
+    i=find(Os==omega_anchors(ad));
+    j= find(As==mu_anchors(ad));
+    drifts=Drift{i,j};
+    drift_speed=drifts(2);
+    speed_noise(ad)=gamrnd(beta*(drift_speed),1/beta);
+end
 
 x_op=[];
 y_op=[];
@@ -20,7 +28,7 @@ for f=2:numel(mu_anchors)-1
 
     theta= (omega_anchors(f)) +(pi/2);
     
-    E_d= ((mu_anchors(f)+speed_noise)*(pi^2)*sinc(epsi/pi))/((4*pi)+(4*(epsi)));
+    E_d= ((mu_anchors(f)+speed_noise(f))*(pi^2)*sinc(epsi/pi))/((4*pi)+(4*(epsi)));
 
     x_(f)=E_d*cos(theta);
 
