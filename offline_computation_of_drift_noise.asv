@@ -32,10 +32,10 @@ wrkrs=4;
 % anchor position
 Drift={};
 tic
-for ang=1:numel(Os) 
+for ang=250:numel(Os) 
     temp_cols_boundaries=c_bounds(find(r_bounds==ang));
     ang
-    parfor sp=1:500
+    for sp=100:500
         
          notboundary_cond= (sp<=max(temp_cols_boundaries));
         
@@ -69,8 +69,21 @@ for ang=1:numel(Os)
 
 end
 toc
-% i=250;
-% plot_drift_speed_for_angle(Drift,i,As,Os);
+
+
+%% plot speed drift for some angles
+
+function plot_drift_speed_for_angle(Drift,angle_idx)
+
+
+ Z = cellfun(@(x)reshape(x,[size(x)]),Drift(angle_idx,:)','un',0);
+ speed_drift=cell2mat(Z);
+
+ figure, plot()
+
+
+
+end
 
 
 
