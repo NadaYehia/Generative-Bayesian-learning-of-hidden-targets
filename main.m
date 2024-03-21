@@ -4,6 +4,7 @@ clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
 close all
+load('Drift.mat')
 targets_xy=[10 250; 200 250]; % 2Dcenters per target: nx2
 targets_sizes=[60 60; 60 60];  % target sizes in x&y: nx2
 arena_size=[-400 400 0 600];
@@ -34,8 +35,8 @@ Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 % sampler='proportional';
 sampler='peak_sampler';
-draw_flg=0;
-target_num=2;
+draw_flg=1;
+target_num=1;
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 win=1;
@@ -52,7 +53,7 @@ initial_ancs=10;
 dd=sum(env.blocks(target_num));
 mu_spd=zeros(1, dd );
 om_main=zeros(1, dd );      
-target_hit=zeros(1, dd ); 
+target_hit=[]; 
 hit_time = ones(1, dd  ); 
 anchors_no= zeros(1,dd);
 [prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,env.arena_dimensions,clearnce,T);
@@ -117,7 +118,7 @@ for k=1:dd
       %% the generative model connecting anchors with a smooth trajectory 
        Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',initial_ancs+1,As,Os);
        [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-       [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T);
+       [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
     
        % keep track of mean heading and speeds
        om_main(k)=mean(omegas_);
@@ -130,7 +131,7 @@ for k=1:dd
        
      end
 
-   [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,target_hit(k),hit_time(k));
+   [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
    [posterior]=Bayes_update_for_actions_params(target_hit(k),mus_,omegas_,sigma_ridge,As,Os,prior,wrkrs);
 %% sampler function for the next actions calling either: proportional or peak sampler
@@ -148,12 +149,12 @@ for k=1:dd
          %% the generative model connecting anchors with a smooth trajectory 
          Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);       
          [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
      else
          mu_anchors=[0 mu_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
          
       end
     
