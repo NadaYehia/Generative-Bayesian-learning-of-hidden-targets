@@ -34,7 +34,6 @@ Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 % sampler='proportional';
 sampler='peak_sampler';
-c_drift=0.6; %0.25,1.6,0.6
 draw_flg=0;
 target_num=2;
 kmerge=1;
