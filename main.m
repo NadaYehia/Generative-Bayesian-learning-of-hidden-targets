@@ -33,9 +33,11 @@ angle_step=((max_angle-min_angle)/n);
 As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
-% sampler='proportional';
-sampler='peak_sampler';
-draw_flg=1;
+
+sampler='proportional';
+
+% sampler='peak_sampler';
+draw_flg=0;
 target_num=1;
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
