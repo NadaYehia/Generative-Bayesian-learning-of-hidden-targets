@@ -34,11 +34,9 @@ As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 
-% sampler='proportional';
+sampler='proportional';
 
-sampler='peak_sampler';
-
-c_drift=0.6; %0.25,1.6,0.6
+% sampler='peak_sampler';
 draw_flg=1;
 target_order=[1];
 kmerge=1;
@@ -61,7 +59,7 @@ cache_logic="local";
 tic
 
 % start agents trials
-parfor agent=1:ags
+for agent=1:ags
 
 dd=sum(env.blocks(target_order));
 t_lst_caching=1;
