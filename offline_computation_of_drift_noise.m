@@ -44,7 +44,7 @@ for ang=1:numel(Os)
          mu_anchors=[0 As(sp) 0];
          omega_anchors=[Os(ang), Os(ang), Os(ang)];
          %% the generative model connecting anchors with a smooth trajectory 
-         [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T);
+         [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory_wo_noise(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,c_drift,T);
          [posterior]=Bayes_update_for_actions_params(1,mus_,omegas_,sigma_ridge,As,Os,prior,wrkrs);
 
          % linear index of the maximum in the posterior
@@ -55,7 +55,7 @@ for ang=1:numel(Os)
 
          % compute the drift= distance between anchor of maximum Likelihood
          % and the actual anchor in angle and speed independently
-         drift_speed= sqrt( (a_c_max-  mu_anchors(2))^2 );
+         drift_speed= ( (a_c_max-  mu_anchors(2)) );
          drift_angle= sqrt( (o_r_max-omega_anchors(2))^2);
          Drift{ang,sp}= [drift_angle, drift_speed];
         
