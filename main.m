@@ -12,7 +12,7 @@ arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
 arena.y=[arena_size(3) arena_size(3) arena_size(4) arena_size(4)];
 env=environment;
 env.intercept="anypt";
-env.blocks=[60 150]; % number of trials per target: 1xn
+env.blocks=[150 150]; % number of trials per target: 1xn
 env.targets_centers=targets_xy; 
 env.targets_dimensions= targets_sizes; 
 env.arena_dimensions= arena_size;  % arena size 1x4
@@ -34,9 +34,9 @@ As=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 
-% sampler='proportional';
-
-sampler='peak_sampler';
+sampler='proportional';
+beta=10;
+% sampler='peak_sampler';
 draw_flg=0;
 target_num=1;
 kmerge=1;
@@ -120,7 +120,7 @@ for k=1:dd
       %% the generative model connecting anchors with a smooth trajectory 
        Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',initial_ancs+1,As,Os);
        [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-       [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
+       [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
     
        % keep track of mean heading and speeds
        om_main(k)=mean(omegas_);
@@ -151,12 +151,12 @@ for k=1:dd
          %% the generative model connecting anchors with a smooth trajectory 
          Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);       
          [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
      else
          mu_anchors=[0 mu_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As);
+         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
          
       end
     
