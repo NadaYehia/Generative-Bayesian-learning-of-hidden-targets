@@ -35,9 +35,9 @@ Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 
 sampler='proportional';
-beta=10;
+beta=100;
 % sampler='peak_sampler';
-draw_flg=0;
+draw_flg=1;
 target_num=1;
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
@@ -49,7 +49,7 @@ T=50;
 tic
 
 % start agents trials
-parfor agent=1:ags
+for agent=1:ags
 
 initial_ancs=10;
 dd=sum(env.blocks(target_num));
@@ -123,13 +123,13 @@ for k=1:dd
        [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
     
        % keep track of mean heading and speeds
-       om_main(k)=mean(omegas_);
-       mu_spd(k)=mean(mus_);      
+       om_main(k)=mean(omega_anchors(2:end-1));
+       mu_spd(k)=mean(mu_anchors(2:end-1));      
 
      else
         % keep track of mean heading and speeds
-        om_main(k)=mean(omegas_);
-        mu_spd(k)=mean(mus_);   
+        om_main(k)=mean(omega_anchors(2:end-1));
+        mu_spd(k)=mean(mu_anchors(2:end-1));   
        
      end
 
