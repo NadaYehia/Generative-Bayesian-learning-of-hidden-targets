@@ -1,10 +1,12 @@
 function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,bestDataFitScaleOffset,bestDataFitMeanToScaleRatio,...
     angle_noise_scale,drift_fac)
 
+
 tol=clearnce;
 arena=env.arena_dimensions;
 heading_conca=[];
 speed_conca=[];
+
 
 for ad=2:numel(mu_anchors)-1
     i=find(Os==omega_anchors(ad));
@@ -12,6 +14,7 @@ for ad=2:numel(mu_anchors)-1
     drifts=Drift{i,j};
     drift_speed=drifts(2);
     mu_anchors(ad)=mu_anchors(ad)+(drift_fac*drift_speed); % the offseted anchor value
+
 end
 
 x_op=[];
