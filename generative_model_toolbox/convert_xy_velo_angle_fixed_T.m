@@ -1,4 +1,4 @@
-function [mu, omega]=convert_xy_velo_angle(x_op,y_op,tol,ka)
+function [mu, omega]=convert_xy_velo_angle_fixed_T(x_op,y_op,tol,T)
  
 omega=[];
 mu=[];
@@ -16,8 +16,8 @@ for i=1:numel(x_op)
     eucl_dist=sqrt(dx_^2 +dy_^2);
 
     mu_n=eucl_dist*((4*epsi)+(4*pi));
-    mu_d= (pi*ka)*sinc(epsi/pi);
-    mu(i)= sqrt(mu_n/mu_d);
+    mu_d= (pi*T)*sinc(epsi/pi);
+    mu(i)= mu_n/mu_d;
 
    
     

@@ -1,7 +1,18 @@
-function [mu_anchors,omega_anchors,n]=anchors_prop_sampler_wnn_merge (posterior,n,As,Os,dist_criterion)
+function [mu_anchors,omega_anchors,n]=anchors_prop_sampler_wnn_merge (posterior,n,As,Os,dist_criterion,lin_idx_bounds)
 
+   l_ind= [];
+   ancs=n;
+   while(numel(l_ind)~=n)
+    
     action_array=[1:size(posterior,1)*size(posterior,2)];
-    l_ind= datasample(action_array,n,'Replace',false,'Weights',(posterior(:)));
+    [temp]=datasample(action_array,ancs,'Replace',false,'Weights',(posterior(:)));
+
+    not_peaks=find(ismember(temp,lin_idx_bounds));
+    temp(not_peaks)=[];
+    l_ind=[l_ind,temp];
+    ancs=n-numel(l_ind);
+
+   end
    
     [omega_temp_ind,mu_temp_ind]=ind2sub(size(posterior),l_ind);
     
