@@ -1,5 +1,5 @@
-function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,bestDataFitScaleOffset,bestDataFitMeanToScaleRatio,...
-    angle_noise_scale,drift_fac)
+function [mu,omega,x_op,y_op]=connect_actions_with_smooth_trajectory_var_T(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,Os,As,bestDataFitScaleOffset,bestDataFitMeanToScaleRatio,...
+    angle_noise_scale,drift_fac,ka)
 
 tol=clearnce;
 arena=env.arena_dimensions;
@@ -20,8 +20,6 @@ x_=[];
 y_=[];
  
 epsi=(tol-pi/2);
-% for every anchor, sum the xand y to the maximum points and this will be
-% x_and y_
 
 for f=2:numel(mu_anchors)-1
 
@@ -36,7 +34,9 @@ for f=2:numel(mu_anchors)-1
     noisy_corrected_anchor= mu_anchors(f)+(scale*randn(1));
     speed_noise(f)=noisy_corrected_anchor-mu_anchors(f);
     
-    E_d= (( noisy_corrected_anchor)*(pi*T)*sinc(epsi/pi))/((4*pi)+(4*(epsi)));
+   
+    T=ka*noisy_corrected_anchor;
+    E_d= (( noisy_corrected_anchor)*(pi*T)*sinc(epsi/pi)) / ((4*pi)+(4*(epsi)));
 
     x_(f)=E_d*cos(theta);
 
@@ -121,35 +121,37 @@ for n=1:size(mu_anchors,2)-1
     dx_=x_(n+1)-x_(n);
     dy_=y_(n+1)-y_(n);
     eucl_dist=sqrt(dx_^2 +dy_^2);
+    
     vmax_n=eucl_dist*((4*pi)+(4*epsi));
-    vmax_d= (pi*T)*(sinc(epsi/pi));
-    vmax= vmax_n/vmax_d;
+    vmax_d= (pi*ka)*(sinc(epsi/pi));
 
-    % use the functional form to produce x,y points in space
+    vmax= sqrt(vmax_n/vmax_d);
+    T=ka*vmax;
     dt=0.01;
+    % use the functional form to produce x,y points in space
     w=(2*pi)/(T);
     t1=[0:dt:T/2];
     speed= [sin(w.*t1)];
-%     speed=speed./sum(speed);
     speed= (vmax).*speed;
-
+    
     heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset) -(k*tol));
 
     pos_x(1)=x_(n);
     pos_y(1)=y_(n);
     
     for t=2:size(heading,2)
-    [dx,dy] = pol2cart(heading(t),speed(t)*dt);
-     pos_x(t)=pos_x(t-1)+dx;
+        [dx,dy] = pol2cart(heading(t),speed(t)*dt);
+        pos_x(t)=pos_x(t-1)+dx;
 
-     pos_y(t)=pos_y(t-1)+dy;
+        pos_y(t)=pos_y(t-1)+dy;
 
     end
-
     pos_x( find(pos_x>arena(2)) )=arena(2); 
     pos_x( find(pos_x<arena(1)) )=arena(1);
     pos_y( find(pos_y>arena(4)) )=arena(4); 
     pos_y( find(pos_y<arena(3)) )=arena(3); 
+
+
 
 x_op=[x_op, pos_x(1:end)];
 y_op=[y_op, pos_y(1:end)];
@@ -159,7 +161,7 @@ pos_y=[];
 pos_x=[];
 
 end
- [mu,omega]= convert_xy_velo_angle_fixed_T(x_op,y_op,tol,T);
+ [mu,omega]= convert_xy_velo_angle(x_op,y_op,tol,ka);
  %% 
 
 

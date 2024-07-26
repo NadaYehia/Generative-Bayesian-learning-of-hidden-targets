@@ -5,14 +5,17 @@ clc
 % (e.g. obstacles) *to be added*
 close all
 load('Drift.mat')
-targets_xy=[10 250; 200 250]; % 2Dcenters per target: nx2
-targets_sizes=[60 60; 60 60];  % target sizes in x&y: nx2
+global failuree;
+failuree=1;
+
+targets_xy=[-49.5 295; -308 205; 245.5 205; -169 250; 102.5 250]; % -49.5 295, 2Dcenters per target: nx2 : from mouse#3, last days
+targets_sizes=[60 60; 60 60; 60 60; 60 60; 60 60];  % target sizes in x&y: nx2
 arena_size=[-400 400 0 600];
 arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
 arena.y=[arena_size(3) arena_size(3) arena_size(4) arena_size(4)];
 env=environment;
 env.intercept="anypt";
-env.blocks=[150 150]; % number of trials per target: 1xn
+env.blocks=[100 100 100 100 100]; % number of trials per target: 1xn
 env.targets_centers=targets_xy; 
 env.targets_dimensions= targets_sizes; 
 env.arena_dimensions= arena_size;  % arena size 1x4
@@ -22,7 +25,7 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
 
 
 sigma_ridge=20; %uncertainity in the value of the action parameters executed.
-ags=50;   %number of agents to run
+ags=100;   %number of agents to run
 n=500;    %number of samples in speed space and angle space.
 max_speed=1000;  %maximum speed value in the action space.
 min_speed=1;     % minimum speed value in the action space
@@ -30,64 +33,105 @@ max_angle=pi/2;  %maximum angle in the action space (relative to the vertical ax
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
 speed_step=round((max_speed-min_speed)/n);
 angle_step=((max_angle-min_angle)/n);
-As=linspace(min_speed,max_speed,n);
+Rs=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
 clearnce=0.5; %loop width in radians 
 
 sampler='proportional';
-beta=100;
 % sampler='peak_sampler';
-draw_flg=1;
-target_num=1;
-kmerge=1;
+
+%% execution noise
+c=[0.033899299095407 ...
+    12.544571007553474]; %minimum execution distance noise for mouse 3
+                                 % minimum noise variance and variance to
+                                 % mean ratio
+
+% c=[0 0]; %no noise, 0.00496923501318870
+
+bestFitDataOffset=c(2);
+bestFitMeanToScaleRatio=c(1);
+
+bestNormalFitAngleScale=pi*(2.189684343307297/180); %minimum angle noise on all targets of mouse 3
+
+% bestNormalFitAngleScale=0; %no hd angle noise
+
+%%
+drift_fac=0;
+ka=0.01;
+draw_flg=0;
+
+% planner optimizer parameters
+w2_L=50;
+tol_radius=0.03; % +/-30mm
+a_entropy=1; %1mm tighter or wider for 1unit change in entropy
+
+%
+target_num=3;
+kmerge=5;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
-win=1;
-noise_sc_mu= (sigma_ridge*speed_step)*0;   % arbitrary distance units/sec
-noise_sc_om= (sigma_ridge*angle_step)*0; % in radians
 wrkrs=4;
-T=50;
+boundary_wash_out=11;
+percentile_peak_sampler=0.6;
+min_radius_around_home=50;
+
+
+%%
+[prior,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions);
+%home radius to exclude
+[prior_exc_home,r_home,c_home]=semi_circle_around_home(prior,min_radius_around_home,Rs,Os);
+%home radius to exclude
+
+lin_idx_bounds_before_conv_1=sub2ind(size(prior),r_bounds,c_bounds);  
+lin_idx_bounds_before_conv_2=sub2ind(size(prior),r_home,c_home);
+lin_idx_bounds_before_conv=[lin_idx_bounds_before_conv_1, lin_idx_bounds_before_conv_2]; 
+
+vc1=min(c_home);
+col_home=repmat(vc1,1,size(prior,1));
+ind_least_col_in_mask1= sub2ind(size(prior),[1:size(prior,1)],col_home);
+
+
+lin_idx_bounds_before_conv=[lin_idx_bounds_before_conv, ind_least_col_in_mask1 ];
+locs_boundary=zeros(size(prior));
+locs_boundary(lin_idx_bounds_before_conv)=1;
+conv_locs_boundary=conv2(locs_boundary,ones(boundary_wash_out),'same');
+lin_idx_bounds= find(conv_locs_boundary);
+%%
 tic
 
 % start agents trials
-for agent=1:ags
+parfor agent=1:ags
 
 initial_ancs=10;
 dd=sum(env.blocks(target_num));
-mu_spd=zeros(1, dd );
+r_loop=zeros(1, dd );
 om_main=zeros(1, dd );      
 target_hit=[]; 
 hit_time = ones(1, dd  ); 
 anchors_no= zeros(1,dd);
-[prior,r_bounds,c_bounds]= set_control_actions_space(As,Os,env.arena_dimensions,clearnce,T);
+[prior,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions);
+%home radius to exclude
+[prior_exc_home,r_home,c_home]=semi_circle_around_home(prior,min_radius_around_home,Rs,Os);
+%home radius to exclude
+prior=prior.*prior_exc_home;
+prior=prior./(sum(sum(prior)));
+I_initial=my_entropy(prior);
+constantt=log(tol_radius)-(a_entropy*I_initial);
 
-mu_anchors_variance={};
-omega_anchors_variance={};
+r_anchors_struct={};
+omega_anchors_struct={};
 anchors_no_variance={};
-posterior_support_mu_var=zeros(1,dd);
+posterior_support_r_var=zeros(1,dd);
 posterior_support_omega_var=zeros(1,dd); 
 posterior_support_mu_entropy=zeros(1,dd);
 posterior_support_omega_entropy=zeros(1,dd);
+tol_vec=zeros(1,dd);
+Ivec=zeros(1,dd);
 
 %% starting the simulation for a model agent
 for k=1:dd
-             
-     % for first run, pick n action anchors randomly from the prior, connect
-     % them smoothly in xy space and find all the actions along this smooth
-     % trajectory
-
+ 
      if(k==1) 
 
-       % Excludes boundary actions from the initial samples to prevent
-       % choosing a false peak at the boundary pixels where the matrix
-       % is circular  
-       
-       lin_idx_bounds=sub2ind(size(prior),r_bounds,c_bounds);
-       lrw=size(prior,1);
-       % add the indices for the first row, last row, and first column
-       ind_first_row= sub2ind(size(prior),repmat(1,size(prior,2),1), (1:size(prior,2))');
-       ind_last_row= sub2ind(size(prior),repmat(lrw,size(prior,2),1),(1:size(prior,2))');
-       lin_idx_bounds=[lin_idx_bounds, [1:size(prior,1)], ind_first_row', ind_last_row'];
-       
        l_ind=[];
        ancs=initial_ancs;
     
@@ -105,93 +149,109 @@ for k=1:dd
     
        end
     
-       [omega_temp_ind,mu_temp_ind]=ind2sub(size(prior),l_ind);
+       [omega_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
     
-       mu_anchors=As(mu_temp_ind);
+       r_anchors=Rs(r_temp_ind);
        omega_anchors=Os(omega_temp_ind);
-       
-       %% add noise to both sampled controls parameters:
-       mu_anchors=mu_anchors+ (noise_sc_mu.*randn(1,numel(mu_anchors)));
-       omega_anchors=omega_anchors+ (noise_sc_om.*randn(1,numel(omega_anchors)));
-                                         
-       [~,min_speed_anchor]=min(mu_anchors);
-       initial_hd=omega_anchors(min_speed_anchor);
+              
+       Ivec(k)=my_entropy(prior);   
+       tol_vec(k)=tol_radius;
+       [~,min_radius_anchor]=min(r_anchors);
+       initial_hd=omega_anchors(min_radius_anchor);
     
       %% the generative model connecting anchors with a smooth trajectory 
-       Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',initial_ancs+1,As,Os);
-       [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-       [mus_,omegas_,pos_x,pos_y]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
-    
+       Gsol=connect_anchors_tsp([0 r_anchors]',[ initial_hd omega_anchors]',initial_ancs+1,Rs,Os);
+       [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
+       [rs_,omegas_,pos_x,pos_y]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k),failuree);
+       anchors_no(k)=initial_ancs;
        % keep track of mean heading and speeds
-       om_main(k)=mean(omega_anchors(2:end-1));
-       mu_spd(k)=mean(mu_anchors(2:end-1));      
+       midT=round(numel(rs_)/2);
+
+       om_main(k)=(omegas_(midT));
+       r_loop(k)=(rs_(midT));
+       
+       r_anchors_struct{k}=(r_anchors);
+       omega_anchors_struct{k}=(omega_anchors);
 
      else
         % keep track of mean heading and speeds
-        om_main(k)=mean(omega_anchors(2:end-1));
-        mu_spd(k)=mean(mu_anchors(2:end-1));   
-       
+        midT=round(numel(rs_)/2);
+
+        om_main(k)=(omegas_(midT));
+        r_loop(k)=(rs_(midT));   
+        r_anchors_struct{k}=(r_anchors);
+        omega_anchors_struct{k}=(omega_anchors);
+
      end
 
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
-   [posterior]=Bayes_update_for_actions_params(target_hit(k),mus_,omegas_,sigma_ridge,As,Os,prior,wrkrs);
-%% sampler function for the next actions calling either: proportional or peak sampler
-   [mu_anchors,omega_anchors,anchors_no(k)]= Sampling_next_actions(posterior,sampler,initial_ancs,As,Os,merging_criterion,r_bounds,c_bounds);
-   
-%% add noise to both sampled controls parameters:
-   mu_anchors=mu_anchors+ (noise_sc_mu.*randn(1,numel(mu_anchors)));
-   omega_anchors=omega_anchors+ (noise_sc_om.*randn(1,numel(omega_anchors)));
+   [posterior]=Bayes_update_for_actions_params(target_hit(k),rs_,omegas_,sigma_ridge,Rs,Os,prior,wrkrs);
 
-   [~,min_speed_anchor]=min(mu_anchors);
-   initial_hd=omega_anchors(min_speed_anchor);
+%% compute entropy and reduce tolerance radius
+   I=my_entropy(posterior);
+   Ivec(k+1)=I;
+   dI=Ivec(k+1)-Ivec(k);
+   tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(1e-04);
+   
+%% sampler function for the next actions calling either: proportional or peak sampler
+   [r_anchors,omega_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Os,merging_criterion,lin_idx_bounds,percentile_peak_sampler);
+   
+   [~,min_radius_anchor]=min(r_anchors);
+   initial_hd=omega_anchors(min_radius_anchor);
  
-     if(anchors_no(k)>1)
+     if(anchors_no(k+1)>1)
     
          %% the generative model connecting anchors with a smooth trajectory 
-         Gsol=connect_anchors_tsp([0 mu_anchors]',[ initial_hd omega_anchors]',anchors_no(k)+1,As,Os);       
-         [mu_anchors,omega_anchors]=reorder_actions_anchors([0 mu_anchors],[ initial_hd omega_anchors],Gsol);
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
+         Gsol=connect_anchors_tsp([0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
+         [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
      else
-         mu_anchors=[0 mu_anchors 0];
+         r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [mus_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_with_smooth_trajectory(mu_anchors,omega_anchors,sigma_ridge,speed_step,env,clearnce,Drift,T,Os,As,beta);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
          
       end
     
    prior=posterior;
-   
+   %posteriors_per_agent(k,:,:)=posterior;
    %% compute variability of posterior Vs variability in anchors
 
      [lind]= datasample(action_array,100,'Replace',false,'Weights',(posterior(:)));
-     [omega_ind,mu_ind]=ind2sub(size(posterior),lind);
+     [omega_ind,r_ind]=ind2sub(size(posterior),lind);
     
-     posterior_support_mu_var(k)= var(As(mu_ind));
+     posterior_support_r_var(k)= var(Rs(r_ind));
      posterior_support_omega_var(k)=var(Os(omega_ind));
     
      posterior_support_omega_entropy(k)=my_entropy(posterior);
      posterior_support_mu_entropy(k)=my_entropy(posterior);
 
 
-     mu_anchors_variance{k}=(mu_anchors);
-     omega_anchors_variance{k}=(omega_anchors);
      anchors_no_variance{k}=anchors_no(k);
 
+     [r_b,c_b]=ind2sub(size(prior),lin_idx_bounds);
    %% draw the arena, current trajectory, next sampled actions
    if(draw_flg==1)
        figure(2);
-       imagesc(As,Os,prior);
-      
-       hold on, scatter(mu_anchors,omega_anchors,30,'r','filled');
+       imagesc(fliplr(Os),Rs,fliplr(prior'));
+       set(gca,'YDir','normal');
+       set(gca,'XDir','reverse');
+       xticks([-pi/2 -pi/3 -pi/4 -pi/8 0 pi/8 pi/4 pi/3 pi/2])
+       xticklabels({'-\pi/2','-\pi/3','-\pi/4','-\pi/8','0','\pi/8','\pi/4','\pi/3','\pi/2'})
+       set(gca,'TickDir','out')
+       hold on, scatter(omega_anchors,r_anchors,30,'r','filled');
+       hold on, scatter(Os(r_b),Rs(c_b),15,'m');
        hold off;
+
        figure(1);       
-       hold on, plot(pos_x,pos_y,'LineWidth',0.5,'Color',[1 0.1 0.8 0.5]);
-       hold on,scatter(pos_x,pos_y,10,[1:numel(pos_y)],'filled');
-      
-       clf;
        patch(arena.x,arena.y,[0.95 0.9 0.95]); hold on;
        patch(targets(target_num).x,targets(target_num).y,[0.85 0.9 0.9]);
+       hold on, plot(pos_x,pos_y,'LineWidth',0.5,'Color',[1 0.1 0.8 0.5]);
+       hold on,scatter(pos_x,pos_y,10,[1:numel(pos_y)],'filled');
+       
+       clf;
+       
    end
  
 
@@ -202,52 +262,21 @@ for k=1:dd
   pos_y=pos_ynew;
 
  % set current actions to the new ones
-  mus_=mus_new;
+  rs_=rs_new;
   omegas_=omegas_new;
 
 end
 
 %% 
-mu_pop_avg(agent,:) = mu_spd;
+r_pop_avg(agent,:) = r_loop;
 hd_pop_avg(agent,:)=om_main;
 corr_pop_avg(agent,:) = target_hit;
 anchors_no_pop(agent,:)=anchors_no;
-
-% compute posterior support (as variance in its samples or entropy) to
-% compare it with variance in executed anchors
-dd= size(posterior_support_omega_entropy,2);
-l=1;
-var_x_mu_temp1=zeros(1,(dd-(2*win)));
-var_x_mu_temp2=zeros(1,(dd-(2*win)));
-var_y_mu_temp=zeros(1,(dd-(2*win)));
-var_x_om_temp1=zeros(1,(dd-(2*win)));
-var_x_om_temp2=zeros(1,(dd-(2*win)));
-var_y_om_temp=zeros(1,(dd-(2*win)));
-
-
-   for sc=win+1:dd-win
-       var_x_mu_temp1(l)=(posterior_support_mu_var(sc));
-       var_x_mu_temp2(l)=(posterior_support_mu_entropy(sc));
-       
-       var_y_mu_temp(l)= var( cell2mat(mu_anchors_variance(sc-win:sc+win)) );
-       
-       var_x_om_temp1(l)=(posterior_support_omega_var(sc));
-       var_x_om_temp2(l)=(posterior_support_omega_entropy(sc));
-
-       var_y_om_temp(l)= var( cell2mat(omega_anchors_variance(sc-win:sc+win)) );
-
-       l=l+1;
-   end
-
-   var_x_mu(agent,:)=var_x_mu_temp1;
-   entropy_x_mu(agent,:)=var_x_mu_temp2;
-   var_y_mu(agent,:)=var_y_mu_temp;
-
-   var_x_om(agent,:)=var_x_om_temp1;
-   entropy_x_om(agent,:)=var_x_om_temp2;
-   var_y_om(agent,:)=var_y_om_temp;
-
-
+r_anchors_pop{agent}=r_anchors_struct;
+om_anchors_pop{agent}=omega_anchors_struct;
+tol_radii(agent,:)=tol_vec;
+I_agents(agent,:)=Ivec;
+%posteriors(agent,:,:,:)=posteriors_per_agent;
 
 end
 

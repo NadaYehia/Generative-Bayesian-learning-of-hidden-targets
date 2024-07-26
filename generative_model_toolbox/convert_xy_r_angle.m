@@ -1,8 +1,7 @@
-function [mu, omega]=convert_xy_velo_angle(x_op,y_op,tol,ka)
+function [r, omega]=convert_xy_r_angle(x_op,y_op)
  
 omega=[];
-mu=[];
-epsi=(tol-pi/2);
+r=[];
 
 for i=1:numel(x_op)
 
@@ -15,9 +14,8 @@ for i=1:numel(x_op)
 
     eucl_dist=sqrt(dx_^2 +dy_^2);
 
-    mu_n=eucl_dist*((4*epsi)+(4*pi));
-    mu_d= (pi*ka)*sinc(epsi/pi);
-    mu(i)= sqrt(mu_n/mu_d);
+    
+    r(i)= eucl_dist;
 
    
     

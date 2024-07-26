@@ -1,6 +1,5 @@
-function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,r_bounds,c_bounds)
+function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,lin_idx_bounds,percentile)
 
-percentile=0.6;
 % find all peaks in a 3x3 neighborhood around every pixel in the posterior
 
 % upward shift: every pixel one position up
@@ -55,14 +54,6 @@ true_peaks=nxt_compar_bin_posterior;
 [omegas,mus]= find(true_peaks);
 
 lin_idx1=sub2ind(size(posterior),omegas,mus);
-
-lin_idx_bounds=sub2ind(size(posterior),r_bounds,c_bounds);
-% add the indices for the first row, last row,, first column
-ind_first_row= sub2ind(size(posterior),repmat(1,size(posterior,2),1),(1:size(posterior,2))');
-ind_last_row= sub2ind(size(posterior),repmat(size(posterior,1),size(posterior,2),1),(1:size(posterior,2))');
-
-
-lin_idx_bounds=[lin_idx_bounds, [1:size(posterior,1)], ind_first_row', ind_last_row'];
 not_peaks=find(ismember(lin_idx1,lin_idx_bounds));      
 omegas(not_peaks)=[];
 mus(not_peaks)=[];
