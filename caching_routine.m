@@ -41,9 +41,14 @@ if(size(cached_tensors,3)>1)
     end
 end
 
+% set active prior to be a flat prior if (n_maps) to try=maps_exhausted
+% the n_maps set in the main script =2
+% set prior to flat when the current posterior before the cache and the one before it
+% don't work on the new environment, (n_maps) 2 maps are tried 
+
 if( maps_exh==(n_maps-1) || size(cached_tensors,3)==1 )
 
-    %active prior= flat prior
+    
     [flat_prior,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions);
     [prior_exc_home,r_home,c_home]=semi_circle_around_home(flat_prior,min_radius_around_home,Rs,Os);
     flat_prior=flat_prior.*prior_exc_home;
@@ -53,7 +58,8 @@ if( maps_exh==(n_maps-1) || size(cached_tensors,3)==1 )
 
 
 else 
-    
+    % choose the cached map with the minimum surprise, for n_maps=2
+    % it is the current one and the one before it;  
     [~,min_S]=min(surprises(p:end));
     active_prior=cached_tensors(:,:,(min_S-1)+p);
     maps_exh=maps_exh+1;
