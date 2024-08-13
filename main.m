@@ -8,7 +8,7 @@ load('Drift.mat')
 global failuree;
 failuree=1;
 
-targets_xy=[-49.5 295; -308 205; 245.5 205; -169 250; 102.5 250]; % -49.5 295, 2Dcenters per target: nx2 : from mouse#3, last days
+targets_xy=[0 300; -283 100; 283 100; -169 250; 102.5 250]; % -49.5 295, 2Dcenters per target: nx2 : from mouse#3, last days
 targets_sizes=[60 60; 60 60; 60 60; 60 60; 60 60];  % target sizes in x&y: nx2
 
 arena_size=[-400 400 0 600];
@@ -26,7 +26,7 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
 
 
 sigma_ridge=20; %uncertainity in the value of the action parameters executed.
-ags=100;   %number of agents to run
+ags=50;   %number of agents to run
 n=500;    %number of samples in speed space and angle space.
 max_speed=1000;  %maximum speed value in the action space.
 min_speed=1;     % minimum speed value in the action space
@@ -68,6 +68,7 @@ a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 
 %
 target_num=3;
+target_order=[1 2];
 kmerge=5;
 
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
@@ -99,19 +100,24 @@ conv_locs_boundary=conv2(locs_boundary,ones(boundary_wash_out),'same');
 lin_idx_bounds= find(conv_locs_boundary);
 %%
 
-h0_caching=2;
+relative_surprise=1000;
 cache_flag=0;
-caching_times=zeros(ags,sum(env.blocks(target_order)));
+
 
 tic
 
 % start agents trials
 parfor agent=1:ags
 
-dd=sum(env.blocks(target_order));
 t_lst_caching=1;
 initial_ancs=10;
-dd=sum(env.blocks(target_num));
+dd=sum(env.blocks(target_order));
+
+maps_exhausted=0;
+n_maps=2;
+
+caching_times_agent=zeros(1,dd);
+
 r_loop=zeros(1, dd );
 om_main=zeros(1, dd );      
 target_hit=[]; 
@@ -123,6 +129,9 @@ anchors_no= zeros(1,dd);
 %home radius to exclude
 prior=prior.*prior_exc_home;
 prior=prior./(sum(sum(prior)));
+
+cached_tensors=zeros(size(prior));
+cched_memories=1;
 I_initial=my_entropy(prior);
 constantt=log(tol_radius)-(a_entropy*I_initial);
 
@@ -194,17 +203,18 @@ for k=1:dd
         omega_anchors_struct{k}=(omega_anchors);
 
      end
-
+    target_num= min(find(k<=cumsum(env.blocks)));
+    
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 
 
 %% caching logic, based on posterior and reward rate signal entropies
 
-   [new_prior,cache_flag]=caching_surprise(target_hit,prior,[omega_anchors',mu_anchors'],As,Os,env.arena_dimensions,clearnce,T,h0_caching);
+   [cache_flag]=caching_surprise(target_hit(k),prior,[omegas_',rs_'],Rs,Os,relative_surprise,env,min_radius_around_home);
 
    if(~cache_flag)
          
-         prior=new_prior;
+        
         %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
          [posterior]=Bayes_update_for_actions_params(target_hit(k),rs_,omegas_,sigma_ridge,Rs,Os,prior,wrkrs);
 
@@ -229,7 +239,7 @@ for k=1:dd
       
       else
       
-           r_anchors=[0 r_anchors 0];
+          r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
          [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
@@ -242,9 +252,42 @@ for k=1:dd
    else
        % you cached your old posterior and started with a new one. 
        caching_times_agent(k)=1;
+
+       [active_prior,cached_tensors,maps_exhausted]=caching_routine(prior,cached_tensors,maps_exhausted,n_maps,...
+           target_hit(k),[omegas_',rs_'],Rs,Os,env,min_radius_around_home);
+       
+       %% compute tolerance from the active prior entropy
+         
+         I=my_entropy(active_prior);
+         Ivec(k+1)=I;
+         dI=Ivec(k+1)-Ivec(k);
+         tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(1e-04);
+
+       %% sample and plan the new route from the current active posterior.
+         [r_anchors,omega_anchors,anchors_no(k+1)]= Sampling_next_actions(active_prior,sampler,initial_ancs,Rs,Os,merging_criterion,lin_idx_bounds,percentile_peak_sampler);
+
+         [~,min_radius_anchor]=min(r_anchors);
+         initial_hd=omega_anchors(min_radius_anchor);
+   
+      if(anchors_no(k+1)>1)
+         
+         Gsol=connect_anchors_tsp([0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
+         [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+
       
- 
-     
+      else
+      
+         r_anchors=[0 r_anchors 0];
+         omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
+         %% the generative model connecting anchors with a smooth trajectory 
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+      
+      end
+
+       % the current flat posterior is the only posterior that will be updated; 
+       %i.e. the old caches remain untouched
+          prior=active_prior;
 
    end
     
@@ -309,6 +352,8 @@ r_anchors_pop{agent}=r_anchors_struct;
 om_anchors_pop{agent}=omega_anchors_struct;
 tol_radii(agent,:)=tol_vec;
 I_agents(agent,:)=Ivec;
+caching_times(agent,:)=caching_times_agent;
+
 %posteriors(agent,:,:,:)=posteriors_per_agent;
 
 

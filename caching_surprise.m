@@ -1,39 +1,47 @@
-function [posterior,flg]=caching_surprise(reward_rate, current_posterior,current_actions,As,Os,arena,clearnce,T,h0)
-
-
-% p(r=1|current actions, and belief)
-% convert mu_anchors and omega_anchors to r,c indexes in the posterior matrix
+function [flg]=caching_surprise(outcome, current_posterior,current_actions,Rs,Os,h0,...
+    env,min_radius_around_home)
+    
+% max a posteriori of p(actions) in working memory
 for ac=2:size(current_actions,1)-1
 
-    omega_acs_idx= find(Os ==current_actions(ac,1));
-    mu_acs_idx=find( As== current_actions(ac,2) );
-    pr_post(ac)=current_posterior(omega_acs_idx,mu_acs_idx);
+    [~,omega_acs_idx]= min(abs(Os -current_actions(ac,1)) );
+    [~,r_acs_idx]=min( abs(Rs-current_actions(ac,2)) );
+    pr_post(ac)=current_posterior(omega_acs_idx,r_acs_idx);
 
 end
 pr_post(1)=[];
-avg_pr_post=mean(pr_post);
+p_working=max(pr_post);
 
-[flat_prior,~,~]=set_control_actions_space(As,Os,arena,clearnce,T);
+% max a posteriori of p(actions) in flat prior
+[flat_prior,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions);
+[prior_exc_home,r_home,c_home]=semi_circle_around_home(flat_prior,min_radius_around_home,Rs,Os);
+flat_prior=flat_prior.*prior_exc_home;
+flat_prior=flat_prior./(sum(sum(flat_prior)));
 
-% same but for the flat prior, p(r=1|current actions, and no belief)
 for ac=2:size(current_actions,1)-1
-
-    omega_acs_idx= find(Os ==current_actions(ac,1));
-    mu_acs_idx=find( As== current_actions(ac,2) );
-    pr_flat_prior(ac)=flat_prior(omega_acs_idx,mu_acs_idx);
+    [~,omega_acs_idx]= min(abs(Os -current_actions(ac,1)) );
+    [~,r_acs_idx]=min( abs(Rs-current_actions(ac,2)) );
+    pr_flat(ac)=flat_prior(omega_acs_idx,r_acs_idx);
 
 end
-pr_flat_prior(1)=[];
-avg_pr_flat_prior=mean(pr_flat_prior);
+pr_flat(1)=[];
+p_flat=max(pr_flat);
 
-if( ( -log(avg_pr_flat_prior)/-log(avg_pr_post)     ) >h0 && reward_rate(end)==0)
-    
-    flg=1;
-    posterior= flat_prior;
-else  % else, don't cache
-    flg=0;
-    posterior=current_posterior;
+% set surprise flag to 1 if Sw/Sf>h0
+% outcome dependent surprise. 
+
+if (outcome==1) % reward=1
+    Sw=-log2(p_working);
+    Sf=-log2(p_flat);
+    flg= ((Sw/Sf)>h0);
+
+else % reward =0
+    Sw=-log2(1-p_working);
+    Sf=-log2(1-p_flat);
+    flg= ((Sw/Sf)>h0);
+
 end
+
 
 
 end
