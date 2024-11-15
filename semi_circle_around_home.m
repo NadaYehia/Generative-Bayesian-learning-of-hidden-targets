@@ -19,4 +19,5 @@ home_highlighted=zeros(size(prior));
 home_highlighted(:,1:js(1))=1;
 prior_exc_home=~(home_highlighted);
 
+
 end

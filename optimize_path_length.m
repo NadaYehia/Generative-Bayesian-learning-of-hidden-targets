@@ -1,6 +1,6 @@
 
 function [optimal_para,fval,exitflag,output,lambda,grad,hessian]=optimize_path_length(r,theta,k_d0,...
-                                                             arena,ka,w2,tol_radius,rg_r,rg_th,opts)
+                                                             arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt)
 
 no_anchors=numel(r);
 phi=tol_radius*rg_th; %maximum angles margin in the tolerance.
@@ -36,11 +36,11 @@ ub_r_th(no_anchors+1:2*no_anchors)=pi;
 
 ub(no_anchors:end)=ub_r_th;
 
-[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)my_path_length(p,arena,ka,no_anchors,w2),p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th),opts);
+[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)my_path_length(p,arena,ka,no_anchors,w2,dt),p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th),opts);
 
 end
 
-function total_cost=my_path_length(p,arena,ka,no_anchors,w2)
+function total_cost=my_path_length(p,arena,ka,no_anchors,w2,dt)
 if(any(isnan(p)))
     flgg=1;
 end
@@ -91,7 +91,7 @@ for n=1:size(r,2)-1
         if(~isreal(T))
             error('Time cant be complex, sinc function is outside pi and -pi');
         end
-    dt=0.01;
+    
     % use the functional form to produce x,y points in space
     w=(2*pi)/(T);
     t1=[0:dt:T/2];
@@ -148,13 +148,17 @@ end
 end
 
 function PL=sum_path_length(x,y)
-PL=0;
- for i=1:size(x,2)-1
-     vx=x(i+1)-x(i);
-     vy=y(i+1)-y(i);
-     PL=PL+norm([vx,vy]);
+d_vx=diff(x);
+d_vy=diff(y);
 
- end
+PL=sum(vecnorm([d_vx' d_vy'],2,2));
+
+%  for i=1:size(x,2)-1
+%      vx=x(i+1)-x(i);
+%      vy=y(i+1)-y(i);
+%      PL=PL+norm([vx,vy]);
+% 
+%  end
 
 end
 

@@ -3,8 +3,11 @@
 %mu_anchors: nx1 x-coord column vector
 %omega_anchors:nx1 y-coord column vector
 
-function Gsol= connect_anchors_tsp(mu_anchors,omega_anchors,nStops,As,Omegas)
- 
+function [Gsol, mu_anchors, omega_anchors]= connect_anchors_tsp(mu_anchors_i,omega_anchors_i,nStops,As,Omegas)
+     
+    mu_anchors=mu_anchors_i;
+    omega_anchors=omega_anchors_i;
+    
     idxs = nchoosek(1:nStops,2);
 
     %nxn distance matrix of all anchors points

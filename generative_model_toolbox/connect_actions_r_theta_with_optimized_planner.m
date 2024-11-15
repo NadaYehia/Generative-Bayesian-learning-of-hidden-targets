@@ -6,6 +6,9 @@ kd(1)=clearnce;
 rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));
 exitflag=0;
+tto=0;
+MaxTrials=5;
+dt=0.01;
 x_op=[];
 y_op=[];
 x_=[];
@@ -85,7 +88,7 @@ for n=1:size(r0,2)-1
         if(~isreal(T))
             error('Time cant be complex, sinc function is outside pi and -pi');
         end
-    dt=0.01;
+    
     % use the functional form to produce x,y points in space
     w=(2*pi)/(T);
     t1=[0:dt:T/2];
@@ -110,7 +113,8 @@ for n=1:size(r0,2)-1
     pos_x( find(pos_x<arena(1)) )=arena(1);
     pos_y( find(pos_y>arena(4)) )=arena(4); 
     pos_y( find(pos_y<arena(3)) )=arena(3); 
-
+ 
+   
 
 
 x_op=[x_op, pos_x(1:end)];
@@ -137,7 +141,7 @@ thetai=theta0;
 while(exitflag<=0)
 
     [optimal_para,fval,exitflag,output,lambda,grad,hessian]=...
-        optimize_path_length(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts);
+        optimize_path_length(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt);
     
     if(exitflag<=0 )
         %noise to the starting point, very small values
@@ -145,6 +149,14 @@ while(exitflag<=0)
         thetai=theta0+0.0001*randn(1);
     end
 
+    tto=tto+1;
+     
+    if(tto>MaxTrials)
+        % return original solution w/o noise or anything, 
+        optimal_para=[];
+        optimal_para=[kd,r0,theta0];
+        break;
+    end
       
 end
 %% plot path after anchors optimization 
@@ -158,6 +170,8 @@ r=optimal_para(ancs_no:ancs_no+ancs_no-1);
 theta=optimal_para(ancs_no+ancs_no:end);
 x_op=[];
 y_op=[];
+x_opc=[];
+y_opc=[];
 x_=[];
 y_=[];
 x_=r.*cos(theta);
@@ -199,7 +213,7 @@ for n=1:size(r,2)-1
         if(~isreal(T))
             error('Time cant be complex, sinc function is outside pi and -pi');
         end
-    dt=0.01;
+    
     % use the functional form to produce x,y points in space
     w=(2*pi)/(T);
     t1=[0:dt:T/2];
@@ -210,8 +224,14 @@ for n=1:size(r,2)-1
 
     heading=wrapToPi(heading);
 
-    pos_x(1)=r(n)*cos(theta(n));
-    pos_y(1)=r(n)*sin(theta(n));
+    if(isempty(x_op)) %no avoided obstacles or any loop adjustments
+        pos_x(1)=r(n)*cos(theta(n));
+        pos_y(1)=r(n)*sin(theta(n));
+    else 
+       pos_x(1)=x_op(end);
+       pos_y(1)=y_op(end);
+   
+    end
     
     for t=2:size(heading,2)
         [dx,dy] = pol2cart(heading(t),speed(t)*dt);
@@ -225,16 +245,23 @@ for n=1:size(r,2)-1
     pos_y( find(pos_y>arena(4)) )=arena(4); 
     pos_y( find(pos_y<arena(3)) )=arena(3); 
 
+    %% handling obstacles
+    [pos_xc,pos_yc]=avoid_obstacles(pos_x,pos_y,env);
+    %% handling obstacles
 
+% x_opc=[x_opc, pos_xc(1:end)];
+% y_opc=[y_opc, pos_yc(1:end)];
 
-x_op=[x_op, pos_x(1:end)];
-y_op=[y_op, pos_y(1:end)];
+x_op=[x_op, pos_xc(1:end)];
+y_op=[y_op, pos_yc(1:end)];
+
 speed_conca=[speed_conca,speed];
 heading_conca=[heading_conca, heading];
 
 pos_y=[];
 pos_x=[];
-
+pos_yc=[];
+pos_xc=[];
 
 end
 % figure,scatter(x_op,y_op,30,[1:numel(x_op)])

@@ -13,5 +13,4 @@ bw_boundary=poly2mask(js,is,sizee(1),sizee(2));
 bw_flipped=flipud(bw_boundary); % 
 bw= bw_boundary | bw_flipped;
 
-
 end

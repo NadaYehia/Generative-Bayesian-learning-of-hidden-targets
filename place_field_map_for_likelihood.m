@@ -21,9 +21,10 @@ for key_pt=1:numel(x_)
     
     % temp place field like map from this keypoint   
     temp=(1/(2*pi*(sigma^2))).* exp(-(...
-        ( ( (X-mux)./rgx ).^2 + ( (Y-muy)./rgy ).^2  )./(2*sigma^2) ));
+        ( ( (X-mux)./rgx ).^2 + ( (Y-muy)./rgy ).^2  )./(2*(sigma^2)) ));
     
     L1=L1+temp;
+    temp=[];
 
 end
 

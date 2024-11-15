@@ -102,7 +102,7 @@ conv_locs_boundary=conv2(locs_boundary,ones(boundary_wash_out),'same');
 lin_idx_bounds= find(conv_locs_boundary);
 %%
 
-relative_surprise=13;
+relative_surprise=11;
 cache_flag=0;
 
 %% arena bounds mask
@@ -230,7 +230,7 @@ for k=1:dd
    %%
 
    %disable caching by setting the flag always to 0
-%     cache_flag=0;
+    cache_flag=0;
    %disable caching by setting the flag always to 0
 
    if(~cache_flag)

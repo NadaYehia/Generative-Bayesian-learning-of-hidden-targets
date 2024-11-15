@@ -51,26 +51,19 @@ function [mu_anchors,omega_anchors,n]=anchors_prop_sampler_wnn_merge (posterior,
 
         temm=[r,c];
         ichosen=temm(ichs);
-        mu_anchors_copy(r)=(mu_anchors(ichosen));
-        mu_anchors_copy(c)= (mu_anchors(ichosen));
+        
+        
+        %
+        choices=[1,2];
+        not_chosen=choices(choices~=ichs);
+        omega_temp_ind(temm(not_chosen))=[];
+        mu_temp_ind(temm(not_chosen))=[];
 
-        omega_anchors_copy(r)=omega_anchors(ichosen);
-        omega_anchors_copy(c)=omega_anchors(ichosen);
-
-
+        mu_anchors(temm(not_chosen))=[];
+        omega_anchors(temm(not_chosen))=[];
+     
+        %
        
-        mu_anchors(r)=mu_anchors_copy(r);
-        mu_anchors(c)=mu_anchors_copy(c);
-        mu_anchors_copy=[];
-
-        omega_anchors(r)=omega_anchors_copy(r);
-        omega_anchors(c)=omega_anchors_copy(c);
-        omega_anchors_copy=[];
-        cmbd_anchors=[mu_anchors' omega_anchors'];
-
-        unique_anchrs=unique(cmbd_anchors,'rows');
-        mu_anchors=(unique_anchrs(:,1))';
-        omega_anchors=(unique_anchrs(:,2))';
         n=size(mu_anchors,2);
 
         % recalc D 

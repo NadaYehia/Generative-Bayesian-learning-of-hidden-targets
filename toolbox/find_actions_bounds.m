@@ -18,11 +18,11 @@ for cor=1:3
     delta=abs(corner(cor,1)-corner(cor+1,1));
     if (delta~=0)
 
-        xq=linspace(corner(cor,1),corner(cor+1,1),delta);
+        xq=linspace(corner(cor,1),corner(cor+1,1),delta+1);
         vq=interp1( [corner(cor,1) corner(cor+1,1)],[corner(cor,2) corner(cor+1,2)],xq);
     else
         delta=abs(corner(cor,2)-corner(cor+1,2));
-        vq=linspace(corner(cor,2),corner(cor+1,2),delta);
+        vq=linspace(corner(cor,2),corner(cor+1,2),delta+1);
         xq=interp1( [corner(cor,2) corner(cor+1,2)],[corner(cor,1) corner(cor+1,1)],vq);
 
     end
@@ -35,7 +35,7 @@ end
 
 % last corner to the first one
 delta=abs(corner(4,2)-corner(1,2));
-vq=linspace(corner(4,2),corner(1,2),delta);
+vq=linspace(corner(4,2),corner(1,2),delta+1);
 xq=interp1( [corner(4,2) corner(1,2)],[corner(4,1) corner(1,1)],vq);
 
 x_op=[x_op,xq];

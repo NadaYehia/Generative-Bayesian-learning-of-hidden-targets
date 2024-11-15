@@ -26,6 +26,6 @@ omega_anchors=zeros(1,nodes);
 
 
 mu_anchors=[mu_anchors 0];
-omega_anchors=[omega_anchors omega_anchors(end)];
+omega_anchors=[  omega_anchors omega_anchors(end)];
 
 end

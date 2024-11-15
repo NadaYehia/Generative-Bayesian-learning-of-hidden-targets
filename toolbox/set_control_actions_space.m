@@ -11,7 +11,9 @@ prior=ones(size(Os,2),size(Rs,2));
 
 
  prior=prior.*bw_boundary;
- prior=prior./(sum(sum(prior)));
+ 
+ 
+ 
 
 
 end
