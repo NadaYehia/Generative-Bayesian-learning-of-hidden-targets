@@ -104,21 +104,27 @@ for n=1:size(r,2)-1
     
     heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset) -(k*tol));
     heading=wrapToPi(heading);
-    
-    pos_x(1)=r(n)*cos(theta(n));
-    pos_y(1)=r(n)*sin(theta(n));
-    
-    for t=2:size(heading,2)
-        [dx,dy] = pol2cart(heading(t),speed(t)*dt);
-        pos_x(t)=pos_x(t-1)+dx;
 
-        pos_y(t)=pos_y(t-1)+dy;
+    pos_x=zeros(1,size(heading,2));
+    pos_y=zeros(1,size(heading,2));
+    
+    dx= zeros(1,size(heading,2));
+    dy=zeros(1,size(heading,2));
 
-    end
-    pos_x( find(pos_x>arena(2)) )=arena(2); 
-    pos_x( find(pos_x<arena(1)) )=arena(1);
-    pos_y( find(pos_y>arena(4)) )=arena(4); 
-    pos_y( find(pos_y<arena(3)) )=arena(3); 
+    dx(1)=r(n)*cos(theta(n));
+    dy(1)=r(n)*sin(theta(n));
+    
+   [temp_dx,temp_dy] = pol2cart(heading(2:end),speed(2:end).*dt);
+   dx(2:end)=temp_dx;
+   dy(2:end)=temp_dy;
+
+   pos_x=cumsum(dx);
+   pos_y=cumsum(dy);
+ 
+   pos_x( find(pos_x>arena(2)) )=arena(2); 
+   pos_x( find(pos_x<arena(1)) )=arena(1);
+   pos_y( find(pos_y>arena(4)) )=arena(4); 
+   pos_y( find(pos_y<arena(3)) )=arena(3); 
 
 if (n~=1)
     domega=wrapToPi(heading(1)-heading_conca(end));
@@ -152,14 +158,6 @@ d_vx=diff(x);
 d_vy=diff(y);
 
 PL=sum(vecnorm([d_vx' d_vy'],2,2));
-
-%  for i=1:size(x,2)-1
-%      vx=x(i+1)-x(i);
-%      vy=y(i+1)-y(i);
-%      PL=PL+norm([vx,vy]);
-% 
-%  end
-
 end
 
 function [c,ceq]=My_r_theta_circle_cons (p,no_anchors,tol_radius,initial_anchors_r,initial_anchors_theta,rg_r,rg_th)
