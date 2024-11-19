@@ -1,5 +1,5 @@
 function [r,omega,x_op,y_op]=connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestDataFitScaleOffset,bestDataFitMeanToScaleRatio,...
-    angle_noise_scale,drift_fac,ka,w20,tol_radius,failuree)
+    angle_noise_scale,drift_fac,ka,w20,tol_radius)
 
 kd=zeros(1,numel(r_anchors)-1);
 kd(1)=clearnce;
