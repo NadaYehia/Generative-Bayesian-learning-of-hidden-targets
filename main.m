@@ -4,7 +4,7 @@ clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
 close all
-load('Drift.mat');
+
 targets_xy=[ -250 290;295 290;-120 335;152 335;10 380 ]; % from the mouse data 
 targets_sizes=[60 60; 60 60; 60 60; 60 60; 60 60];  % target sizes in x&y: nx2
 phi_obstacle=0;
@@ -56,7 +56,7 @@ bestFitMeanToScaleRatio=c(1);
 bestNormalFitAngleScale=0; %no hd angle noise
 
 %%
-drift_fac=0;
+
 ka=0.01;
 draw_flg=0;
 
@@ -162,7 +162,7 @@ for k=1:dd
       %% the generative model connecting anchors with a smooth trajectory 
        [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[initial_hd  omega_anchors]',initial_ancs+1,Rs,Os);
        [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-       [rs_,omegas_,pos_x,pos_y]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k));
+       [rs_,omegas_,pos_x,pos_y]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k));
        anchors_no(k)=initial_ancs;
 
        % keep track of mean heading and speeds
@@ -228,7 +228,7 @@ for k=1:dd
          
          [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
          [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1));
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
 
       
       else
@@ -236,7 +236,7 @@ for k=1:dd
           r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1));
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
       
       end
          prior=posterior;
@@ -267,7 +267,7 @@ for k=1:dd
          
          [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
          [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1));
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
 
       
       else
@@ -275,7 +275,7 @@ for k=1:dd
          r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1));
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
       
       end
 
