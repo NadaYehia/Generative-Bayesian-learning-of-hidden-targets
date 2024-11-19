@@ -98,32 +98,35 @@ for n=1:size(r0,2)-1
     heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset) -(k*tol));
 
     heading=wrapToPi(heading);
-
-    pos_x(1)=r0(n)*cos(theta0(n));
-    pos_y(1)=r0(n)*sin(theta0(n));
     
-    for t=2:size(heading,2)
-        [dx,dy] = pol2cart(heading(t),speed(t)*dt);
-        pos_x(t)=pos_x(t-1)+dx;
+    pos_x=zeros(1,size(heading,2));
+    pos_y=zeros(1,size(heading,2));
+    
+    dx= zeros(1,size(heading,2));
+    dy=zeros(1,size(heading,2));
 
-        pos_y(t)=pos_y(t-1)+dy;
+    dx(1)=r0(n)*cos(theta0(n));
+    dy(1)=r0(n)*sin(theta0(n));
+    
+    [temp_dx,temp_dy] = pol2cart(heading(2:end),speed(2:end).*dt);
+    dx(2:end)=temp_dx;
+    dy(2:end)=temp_dy;
 
-    end
+    pos_x=cumsum(dx);
+    pos_y=cumsum(dy);
+ 
     pos_x( find(pos_x>arena(2)) )=arena(2); 
     pos_x( find(pos_x<arena(1)) )=arena(1);
     pos_y( find(pos_y>arena(4)) )=arena(4); 
     pos_y( find(pos_y<arena(3)) )=arena(3); 
  
    
-
-
-x_op=[x_op, pos_x(1:end)];
-y_op=[y_op, pos_y(1:end)];
-speed_conca=[speed_conca,speed];
-heading_conca=[heading_conca, heading];
-
-pos_y=[];
-pos_x=[];
+    x_op=[x_op, pos_x(1:end)];
+    y_op=[y_op, pos_y(1:end)];
+    speed_conca=[speed_conca,speed];
+    heading_conca=[heading_conca, heading];
+    pos_y=[];
+    pos_x=[];
 
 end
 % figure,scatter(x_op,y_op,30,[1:numel(x_op)]);
@@ -221,25 +224,33 @@ for n=1:size(r,2)-1
     speed= (vmax).*speed;
     
     heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset) -(k*tol));
-
     heading=wrapToPi(heading);
+    
+    pos_x=zeros(1,size(heading,2));
+    pos_y=zeros(1,size(heading,2));
+    
+    dx= zeros(1,size(heading,2));
+    dy=zeros(1,size(heading,2));
 
+    
     if(isempty(x_op)) %no avoided obstacles or any loop adjustments
-        pos_x(1)=r(n)*cos(theta(n));
-        pos_y(1)=r(n)*sin(theta(n));
+        dx(1)=r(n)*cos(theta(n));
+        dy(1)=r(n)*sin(theta(n));
+
     else 
-       pos_x(1)=x_op(end);
-       pos_y(1)=y_op(end);
+        dx(1)=x_op(end);
+        dy(1)=y_op(end);
    
     end
     
-    for t=2:size(heading,2)
-        [dx,dy] = pol2cart(heading(t),speed(t)*dt);
-        pos_x(t)=pos_x(t-1)+dx;
+    [temp_dx,temp_dy] = pol2cart(heading(2:end),speed(2:end).*dt);
+    dx(2:end)=temp_dx;
+    dy(2:end)=temp_dy;
 
-        pos_y(t)=pos_y(t-1)+dy;
+    pos_x=cumsum(dx);
+    pos_y=cumsum(dy);
+ 
 
-    end
     pos_x( find(pos_x>arena(2)) )=arena(2); 
     pos_x( find(pos_x<arena(1)) )=arena(1);
     pos_y( find(pos_y>arena(4)) )=arena(4); 
