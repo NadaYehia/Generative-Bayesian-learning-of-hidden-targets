@@ -1,10 +1,10 @@
 
 function plot_shaded_error_bar(data,c)
-scale = 1;
+figure;
 trials=size(data,2);
-prc_err=prctile(data,[90 10],1);
-
+smooth_data=movmean(data(:,1:trials),11,2);
+err=std(smooth_data,0,1);
 hold on;
-shadedErrorBar(1:trials, median(data(:,1:trials),1) ,prc_err,{'color',c}); hold on;
+shadedErrorBar_std_mean(1:trials, mean(smooth_data) ,err,{'color',c}); hold on;
 
 end

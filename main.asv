@@ -4,7 +4,7 @@ clc
 % setup the environment: the arena size, number of target, special objects
 % (e.g. obstacles) *to be added*
 close all
-load('Drift.mat');
+
 targets_xy=[ -250 290;295 290;-120 335;152 335;10 380 ]; % from the mouse data 
 targets_sizes=[60 60; 60 60; 60 60; 60 60; 60 60];  % target sizes in x&y: nx2
 phi_obstacle=0;
@@ -25,9 +25,9 @@ obstacle_=env.setup_obstacle_coord;
 
 sigma_ridge=8; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
-ags=25;   %number of agents to run
+ags=5;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
-max_speed=850;  %maximum speed value in the action space.
+max_speed=1000;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
 max_angle=pi/2;  %maximum angle in the action space (relative to the vertical axis) 
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
@@ -56,7 +56,7 @@ bestFitMeanToScaleRatio=c(1);
 bestNormalFitAngleScale=0; %no hd angle noise
 
 %%
-drift_fac=0;
+
 ka=0.01;
 draw_flg=0;
 
@@ -83,9 +83,9 @@ cache_flag=0;
 
 
 %% simulation start
-tic
 
-for (agent=1:ags
+tic
+parfor (agent=1:ags,16)
 
 t_lst_caching=1;
 initial_ancs=10;
@@ -162,7 +162,7 @@ for k=1:dd
       %% the generative model connecting anchors with a smooth trajectory 
        [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[initial_hd  omega_anchors]',initial_ancs+1,Rs,Os);
        [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-       [rs_,omegas_,pos_x,pos_y]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k),failuree);
+       [rs_,omegas_,pos_x,pos_y]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k));
        anchors_no(k)=initial_ancs;
 
        % keep track of mean heading and speeds
@@ -228,7 +228,7 @@ for k=1:dd
          
          [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
          [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
 
       
       else
@@ -236,7 +236,7 @@ for k=1:dd
           r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
       
       end
          prior=posterior;
@@ -247,7 +247,7 @@ for k=1:dd
        % you cached your old posterior and started with a new one. 
        caching_times_agent(k)=1;
 
-       [active_prior,cached_tensors,maps_exhausted]=caching_routine(prior,cached_tensors,maps_exhausted,n_maps,...
+       [active_prior,maps_exhausted]=caching_routine(prior,maps_exhausted,n_maps,...
            target_hit(k),[omegas_',rs_'],Rs,Os,env,min_radius_around_home);
        
        %% compute tolerance from the active prior entropy
@@ -267,7 +267,7 @@ for k=1:dd
          
          [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ initial_hd omega_anchors]',anchors_no(k+1)+1,Rs,Os);       
          [r_anchors,omega_anchors]=reorder_actions_anchors([0 r_anchors],[ initial_hd omega_anchors],Gsol);
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
 
       
       else
@@ -275,7 +275,7 @@ for k=1:dd
          r_anchors=[0 r_anchors 0];
          omega_anchors=[omega_anchors, omega_anchors, omega_anchors];
          %% the generative model connecting anchors with a smooth trajectory 
-         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Drift,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,drift_fac,ka,w2_L,tol_vec(k+1),failuree);
+         [rs_new,omegas_new,pos_xnew,pos_ynew]= connect_actions_r_theta_with_optimized_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale,ka,w2_L,tol_vec(k+1));
       
       end
 
@@ -336,8 +336,6 @@ om_anchors_pop{agent}=omega_anchors_struct;
 tol_radii(agent,:)=tol_vec;
 I_agents(agent,:)=Ivec;
 caching_times(agent,:)=caching_times_agent;
-mass_out_tent_agents(agent,:)=mass_out_tent;
-mass_outside_home_agents(agent,:)=mass_outside_home;
 posteriors_support(agent,:)=posteriors_support_per_agent;
 surprise_working_agent(agent,:)=surprise_working;
 surprise_flat_agent(agent,:)=surprise_flat;
