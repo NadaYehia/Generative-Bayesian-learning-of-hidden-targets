@@ -23,11 +23,11 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
                                  % ycoords of the target corners
 obstacle_=env.setup_obstacle_coord;
 
-sigma_ridge=8; %uncertainity in the value of the action parameters executed.
+sigma_ridge=7; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
-ags=25;   %number of agents to run
+ags=10;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
-max_speed=850;  %maximum speed value in the action space.
+max_speed=1000;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
 max_angle=pi/2;  %maximum angle in the action space (relative to the vertical axis) 
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
@@ -78,14 +78,14 @@ min_radius_around_home=50;
 
 %%
 
-relative_surprise=12;
+relative_surprise=15;
 cache_flag=0;
 
 
 %% simulation start
 
 tic
-parfor (agent=1:ags,16)
+parfor agent=1:ags
 
 t_lst_caching=1;
 initial_ancs=10;
