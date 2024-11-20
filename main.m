@@ -188,9 +188,14 @@ for k=1:dd
     
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 
+    % likelihood of current traj
+   L1=place_field_map_for_likelihood(rs_,omegas_,sigma_ridge,Rs,Os,wrkrs);
+   L1=L1.*arena_home_mask;
+   L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
+
 
    %% new surprise based on likelihood and prior
-    [cache_flag,surpW,surpF]=surprise_Ann(target_hit(k),prior,[omegas_',rs_'],Rs,Os,sigma_ridge,relative_surprise,env,min_radius_around_home,wrkrs,arena_home_mask);
+    [cache_flag,surpW,surpF]=surprise_Ann(L1,target_hit(k),prior,[omegas_',rs_'],Rs,Os,sigma_ridge,relative_surprise,env,min_radius_around_home,wrkrs,arena_home_mask);
     surprise_flat(k)=surpF;
     surprise_working(k)=surpW;
    %%
@@ -203,15 +208,13 @@ for k=1:dd
          
         
         %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
-         [posterior]=Bayes_update_for_actions_params(target_hit(k),rs_,omegas_,sigma_ridge,Rs,Os,prior,wrkrs,arena_home_mask);
-         
-         %new_posterior=posterior_renormalization_set_min_to_eps(eps,posterior);
-         
+         [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),rs_,omegas_,sigma_ridge,Rs,Os,prior,wrkrs,arena_home_mask);
+                  
          % leak in the posterior certanity every time step; implemented
          % via a 2D gaussian blur
-%          new_posterior=myconv2(posterior,leak_sigma,my_mask,my_mask2);
-         
-%          posterior=new_posterior;
+         % new_posterior=myconv2(posterior,leak_sigma,my_mask,my_mask2);
+         % posterior=new_posterior;
+
       %% compute entropy and reduce tolerance radius
          I=my_entropy(posterior);
          Ivec(k+1)=I;

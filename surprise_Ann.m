@@ -1,17 +1,6 @@
-function [flg,Sw,Sf]=surprise_Ann(outcome, current_posterior,current_actions,Rs,Os,sigma_ridge,h0,...
+function [flg,Sw,Sf]=surprise_Ann(L1,outcome, current_posterior,current_actions,Rs,Os,sigma_ridge,h0,...
     env,min_radius_around_home,wrkrs,arena_home_mask)
     
-mus_curr=current_actions(:,2);
-omegas_curr=current_actions(:,1);
-
-% likelihood of current traj
-L1=place_field_map_for_likelihood(mus_curr,omegas_curr,sigma_ridge,Rs,Os,wrkrs);
-naned_arena_home_mask=1-arena_home_mask;
-naned_arena_home_mask(find(naned_arena_home_mask))=nan;
-arena_home_mask=arena_home_mask+naned_arena_home_mask;
-
-L1=L1.*arena_home_mask;
-L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
 
 if(outcome==1)
     L1=L1;
