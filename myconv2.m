@@ -1,5 +1,5 @@
 % inputs
-function outMat= myconv2 (inMat,sigma,arena_mask,home_mask)
+function outMat= myconv2 (inMat,sigma)
 
 filtersize = round(4*sigma); %
 
@@ -23,9 +23,7 @@ for m = 1:s0(1)
     end
 end
 
-%mask out the non premissible actions area
-outMat=outMat.* (~arena_mask);
-outMat=outMat.* (~home_mask);
 
-outMat=outMat./sum(outMat(:));
+
+outMat=outMat./nansum(outMat(:));
 end

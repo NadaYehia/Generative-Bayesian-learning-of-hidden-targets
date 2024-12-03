@@ -5,8 +5,8 @@ clc
 % (e.g. obstacles) *to be added*
 close all
 
-targets_xy=[ -250 290;295 290;-120 335;152 335;10 380 ]; % from the mouse data 
-targets_sizes=[60 60; 60 60; 60 60; 60 60; 60 60];  % target sizes in x&y: nx2
+targets_xy=[10 380;-250 290; 295 290;-120 335;152 335; ]; % from the mouse data 
+targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  % target sizes in x&y: nx2
 phi_obstacle=0;
 arena_size=[-375 375 0 750 ];
 arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
@@ -23,11 +23,11 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
                                  % ycoords of the target corners
 obstacle_=env.setup_obstacle_coord;
 
-sigma_ridge=7; %uncertainity in the value of the action parameters executed.
+sigma_ridge=5.5; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
-ags=10;   %number of agents to run
+ags=50;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
-max_speed=1000;  %maximum speed value in the action space.
+max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
 max_angle=pi/2;  %maximum angle in the action space (relative to the vertical axis) 
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
@@ -67,7 +67,7 @@ a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 
 %
 target_num=3;
-target_order=[1 2];
+target_order=[1];
 kmerge=1;
 
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
@@ -78,14 +78,26 @@ min_radius_around_home=50;
 
 %%
 
-relative_surprise=15;
+relative_surprise=26;
 cache_flag=0;
 
+spc=1000000;
+[prior_global,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions,spc);
+prior_global=boolean(prior_global);
+%home radius to exclude
+[prior_exc_home,r_home,c_home]=semi_circle_around_home(prior_global,min_radius_around_home,Rs,Os);
+%home radius to exclude
+prior_global=prior_global&prior_exc_home;
+arena_home_mask=prior_global;
+naned_arena_home_mask=1-arena_home_mask;
+naned_arena_home_mask(find(naned_arena_home_mask))=nan;
+arena_home_mask=arena_home_mask+naned_arena_home_mask;
 
+prior_global=arena_home_mask./(nansum(arena_home_mask(:)));
 %% simulation start
 
 tic
-for agent=1:ags
+parfor agent=1:ags
 
 t_lst_caching=1;
 initial_ancs=10;
@@ -105,19 +117,7 @@ target_hit=[];
 hit_time = ones(1, dd  ); 
 anchors_no= zeros(1,dd);
 
-[prior,r_bounds,c_bounds]= set_control_actions_space(Rs,Os,env.arena_dimensions);
-prior=boolean(prior);
-%home radius to exclude
-[prior_exc_home,r_home,c_home]=semi_circle_around_home(prior,min_radius_around_home,Rs,Os);
-%home radius to exclude
-prior=prior&prior_exc_home;
-arena_home_mask=prior;
-naned_arena_home_mask=1-arena_home_mask;
-naned_arena_home_mask(find(naned_arena_home_mask))=nan;
-arena_home_mask=arena_home_mask+naned_arena_home_mask;
-
-prior=arena_home_mask./(nansum(arena_home_mask(:)));
-
+prior=prior_global;
 cched_memories=1;
 I_initial=my_entropy(prior);
 constantt=log(tol_radius)-(a_entropy*I_initial);
@@ -189,8 +189,7 @@ for k=1:dd
    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
 
     % likelihood of current traj
-   L1=place_field_map_for_likelihood(rs_,omegas_,sigma_ridge,Rs,Os,wrkrs);
-   
+   L1=place_field_map_for_likelihood_binned(rs_,omegas_,sigma_ridge,Rs,Os,wrkrs);
    L1=L1.*arena_home_mask;
    L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
 
@@ -202,7 +201,7 @@ for k=1:dd
    %%
 
    %disable caching by setting the flag always to 0
-%     cache_flag=0;
+    cache_flag=0;
    %disable caching by setting the flag always to 0
 
    if(~cache_flag)
@@ -213,9 +212,9 @@ for k=1:dd
                   
          % leak in the posterior certanity every time step; implemented
          % via a 2D gaussian blur
-         % new_posterior=myconv2(posterior,leak_sigma,my_mask,my_mask2);
-         % posterior=new_posterior;
-         
+%          new_posterior=myconv2(posterior,leak_sigma);
+%          posterior=new_posterior;
+
       %% compute entropy and reduce tolerance radius
          I=my_entropy(posterior);
          Ivec(k+1)=I;
@@ -251,8 +250,7 @@ for k=1:dd
        % you cached your old posterior and started with a new one. 
        caching_times_agent(k)=1;
 
-       [active_prior,maps_exhausted]=caching_routine(prior,maps_exhausted,n_maps,...
-           target_hit(k),[omegas_',rs_'],Rs,Os,env,min_radius_around_home);
+       active_prior=prior_global;
        
        %% compute tolerance from the active prior entropy
          

@@ -7,8 +7,8 @@ rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));
 exitflag=0;
 tto=0;
-MaxTrials=15;
-dt=0.001;
+MaxTrials=1;
+dt=0.01;
 x_op=[];
 y_op=[];
 x_=[];
@@ -164,9 +164,14 @@ while(exitflag<=0)
 end
 %% plot path after anchors optimization 
 k_d0=optimal_para(1:numel(r0)-1);
-temp_kd0=abs(wrapToPi(k_d0));
 
+if(any(isnan(optimal_para)) )
 
+    r_anchors
+    omega_anchors
+    error('optimized para has Nans')
+
+end
 
 ancs_no=numel(r0);
 r=optimal_para(ancs_no:ancs_no+ancs_no-1);
@@ -256,31 +261,28 @@ for n=1:size(r,2)-1
     pos_y( find(pos_y>arena(4)) )=arena(4); 
     pos_y( find(pos_y<arena(3)) )=arena(3); 
 
+
+%%
+
+
     %% handling obstacles
-    [pos_xc,pos_yc]=avoid_obstacles(pos_x,pos_y,env);
+%      [pos_xc,pos_yc]=avoid_obstacles(pos_x,pos_y,env);
     %% handling obstacles
 
 % x_opc=[x_opc, pos_xc(1:end)];
 % y_opc=[y_opc, pos_yc(1:end)];
 
-x_op=[x_op, pos_xc(1:end)];
-y_op=[y_op, pos_yc(1:end)];
+x_op=[x_op, pos_x(1:end)];
+y_op=[y_op, pos_y(1:end)];
 
 speed_conca=[speed_conca,speed];
 heading_conca=[heading_conca, heading];
 
 pos_y=[];
 pos_x=[];
-pos_yc=[];
-pos_xc=[];
+
 
 end
-% figure,scatter(x_op,y_op,30,[1:numel(x_op)])
-%% plot paths and anchors before and after optimization
-% figure,plot(x_op_old,y_op_old,'r');
-% hold on, scatter(x_old,y_old,'r');
-% hold on, plot(x_op,y_op,'b');
-% hold on, scatter(x_,y_,'b');
 
 % infer r,omegas from the optimized path
  [r,omega]= convert_xy_r_angle(x_op,y_op);
