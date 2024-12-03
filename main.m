@@ -25,7 +25,7 @@ obstacle_=env.setup_obstacle_coord;
 
 sigma_ridge=5.5; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
-ags=50;   %number of agents to run
+ags=100;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -35,7 +35,7 @@ speed_step=round((max_speed-min_speed)/n);
 angle_step=((max_angle-min_angle)/n);
 Rs=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=0.5; %loop width in radians 
+clearnce=0.2; %loop width in radians 
 
 % sampler='proportional';
 sampler='peak_sampler';

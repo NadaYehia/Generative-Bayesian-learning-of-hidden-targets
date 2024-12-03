@@ -35,7 +35,7 @@ speed_step=round((max_speed-min_speed)/n);
 angle_step=((max_angle-min_angle)/n);
 Rs=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=0.5; %loop width in radians 
+clearnce=0.2; %loop width in radians 
 
 % sampler='proportional';
 sampler='peak_sampler';
@@ -58,7 +58,7 @@ bestNormalFitAngleScale=0; %no hd angle noise
 %%
 
 ka=0.01;
-draw_flg=0;
+draw_flg=1;
 
 % planner optimizer parameters
 w2_L=50;
@@ -67,7 +67,7 @@ a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 
 %
 target_num=3;
-target_order=[1];
+target_order=[1 2];
 kmerge=1;
 
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
@@ -201,7 +201,7 @@ for k=1:dd
    %%
 
    %disable caching by setting the flag always to 0
-    cache_flag=0;
+%     cache_flag=0;
    %disable caching by setting the flag always to 0
 
    if(~cache_flag)
