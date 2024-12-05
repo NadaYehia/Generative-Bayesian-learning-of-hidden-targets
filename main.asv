@@ -5,7 +5,7 @@ clc
 % (e.g. obstacles) *to be added*
 close all
 
-targets_xy=[10 380;-250 290; 295 290;-120 335;152 335; ]; % from the mouse data 
+targets_xy=[-250 290;10 380; 295 290;-120 335;152 335; ]; % from the mouse data 
 targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  % target sizes in x&y: nx2
 phi_obstacle=0;
 arena_size=[-375 375 0 750 ];
@@ -35,7 +35,7 @@ speed_step=round((max_speed-min_speed)/n);
 angle_step=((max_angle-min_angle)/n);
 Rs=linspace(min_speed,max_speed,n);
 Os=linspace(min_angle,max_angle,n);
-clearnce=0.2; %loop width in radians 
+clearnce=0.5; %loop width in radians 
 
 % sampler='proportional';
 sampler='peak_sampler';
@@ -61,7 +61,7 @@ ka=0.01;
 draw_flg=0;
 
 % planner optimizer parameters
-w2_L=50;
+w2_L=20;
 tol_radius=0.03; % +/-30mm
 a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 

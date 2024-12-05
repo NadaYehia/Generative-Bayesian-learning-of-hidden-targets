@@ -1,7 +1,7 @@
 
 scale = 2;
 trials=size(corr_pop_avg,2);
-smooth_corr_pop_avg=movmean(corr_pop_avg,4,2);
+smooth_corr_pop_avg=movmean(corr_pop_avg,5,2);
 
 
 % sem_acc= scale.*(std(smooth_corr_pop_avg(:,1:trials))./sqrt(size(smooth_corr_pop_avg,1)));
