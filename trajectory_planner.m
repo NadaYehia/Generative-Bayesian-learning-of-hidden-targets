@@ -121,7 +121,7 @@ thetai=theta0;
 while(exitflag<=0)
 
     [optimal_para,fval,exitflag,output,~,~,~]=...
-        optimize_path_length(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt);
+        optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt);
     
     if(exitflag<=0 )
         %noise to the starting point, very small values

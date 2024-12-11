@@ -1,5 +1,5 @@
 
-function [optimal_para,fval,exitflag,output,lambda,grad,hessian]=optimize_path_length(r,theta,k_d0,...
+function [optimal_para,fval,exitflag,output,lambda,grad,hessian]=optimize_path_length_and_smoothness(r,theta,k_d0,...
                                                              arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt)
 
 no_anchors=numel(r);
@@ -42,11 +42,11 @@ ub_r_th(no_anchors+1:2*no_anchors)=pi;
 ub(no_anchors:end)=ub_r_th;
 
 % 
-[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)my_path_length(p,arena,ka,no_anchors,w2,dt),p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th),opts);
+[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)my_loss(p,arena,ka,no_anchors,w2,dt),p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th),opts);
 
 end
 
-function total_cost=my_path_length(p,arena,ka,no_anchors,w2,dt)
+function total_cost=my_loss(p,arena,ka,no_anchors,w2,dt)
 
 
 x_op=[];
