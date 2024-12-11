@@ -165,7 +165,7 @@ d_vy=diff(y);
 PL=sum(vecnorm([d_vx' d_vy'],2,2));
 end
 
-% Non-linear constraint of a circle with radius: error radius (in normalized
+% Non-linear constraint of a circle with radius (tol_radius), an error radius, in normalized
 % units) around every anchor in r,theta space.
 
 function [c,ceq]=My_r_theta_circle_cons (p,no_anchors,tol_radius,initial_anchors_r,initial_anchors_theta,rg_r,rg_th)
