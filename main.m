@@ -38,22 +38,19 @@ clearnce=0.2; %loop width in radians
 % sampler='proportional';
 sampler='peak_sampler';
 
-%% execution noise
+% execution noise
 % c=[0.033899299095407 ...
-%     12.544571007553474]; %minimum execution distance noise for mouse 3
-                                 % minimum noise variance and variance to
-                                 % mean ratio
-
-c=[0 0]; %no noise, 0.00496923501318870
+%     12.544571007553474]; % minimum noise in the R estimate fitted to all targets 
+                           % on mouse 3
+                                 
+c=[0 0]; %no R noise
 
 bestFitDataOffset=c(2);
 bestFitMeanToScaleRatio=c(1);
 
-% bestNormalFitAngleScale=pi*(2.189684343307297/180); %minimum angle noise on all targets of mouse 3
-
-bestNormalFitAngleScale=0; %no hd angle noise
-
-%%
+% bestNormalFitAngleScale=pi*(2.189684343307297/180); % minimum noise in the Theta estimate fitted to
+                                                      % all targets of mouse 3
+bestNormalFitAngleScale=0; % no hd angle noise
 
 ka=0.01;
 draw_flg=0;
@@ -63,7 +60,6 @@ w2_L=1000;
 tol_radius=0.03; % +/-30mm
 a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 
-%
 target_num=3;
 target_order=[1];
 kmerge=1;
@@ -73,8 +69,6 @@ wrkrs=4;
 boundary_wash_out=3;
 percentile_peak_sampler=0;
 min_radius_around_home=50;
-
-%%
 
 relative_surprise= 26;
 cache_flag=0;
@@ -90,9 +84,9 @@ arena_home_mask=prior_global;
 naned_arena_home_mask=1-arena_home_mask;
 naned_arena_home_mask(find(naned_arena_home_mask))=nan;
 arena_home_mask=arena_home_mask+naned_arena_home_mask;
-
 prior_global=arena_home_mask./(nansum(arena_home_mask(:)));
-%% simulation start
+
+%% SIMULATION start
 
 tic
 for agent=1:ags
@@ -131,7 +125,8 @@ posterior_support_omega_entropy=zeros(1,dd);
 tol_vec=zeros(1,dd);
 Ivec=zeros(1,dd);
 
-%% starting the simulation for a model agent
+%% starting the simulation for a model mouse
+
 for k=1:dd
 
      if(k==1) 
@@ -179,7 +174,6 @@ for k=1:dd
    L1=place_field_map_for_likelihood_binned(rs_,omegas_,sigma_ridge,Rs,Os,wrkrs);
    L1=L1.*arena_home_mask;
    L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
-
 
    % compute surprise based on likelihood and prior
     [cache_flag,surpW,surpF]=surprise(L1,target_hit(k),prior,[omegas_',rs_'],Rs,Os,sigma_ridge,relative_surprise,env,min_radius_around_home,wrkrs,arena_home_mask);
