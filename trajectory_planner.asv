@@ -47,13 +47,13 @@ kd=[clearnce, zeros(1,numel(r_anchors)-2)]; % (n-1) row vector of the initial
 
 theta0=theta_anchors+(pi/2);
 r0=r_anchors;
-
+m=1;
 % angles of the (n-1) vectors connecting every anchor pair in{n anchors}:
 for n=2:numel(r0)
 
-    heading_offsets(n-1)= theta0(n-1)+atan2( r0(n)*sin(theta0(n)-theta0(n-1)),...
+    heading_offsets(m)= theta0(n-1)+atan2( r0(n)*sin(theta0(n)-theta0(n-1)),...
                                     r0(n)*cos(theta0(n)-theta0(n-1)) -r0(n-1)  );
-    
+    m=m+1;
 end
 
 for n=2:size(r0,2)-1
