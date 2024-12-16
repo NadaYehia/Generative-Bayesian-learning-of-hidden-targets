@@ -18,8 +18,11 @@ ka,w20,tol_radius)
 %          {x_op,y_op} output x and y coordinates of the planned path 
 %                     
 %
-% EXAMPLE: [r_path,theta_,x_op,y_op]= trajectory_planner([0 300 300 0],...
-%              [pi/2 pi/2 0.2 0.2],env,clearnce,Os,Rs,0,0,0,0.01,1000,0.03);
+% EXAMPLE: 
+% env=environment;
+% env.arena_dimensions= [-375,375,0,750];
+% [r_path,theta_,x_op,y_op]= trajectory_planner([0 300 300 0],...
+%              [0 pi/2 0.2 0],env,0.2,Os,Rs,0.01,1000,0.03);
 
 %          figure,scatter(x_op,y_op,30,[1:numel(x_op)])  
                                  % plots the path weaved through input anchors 
