@@ -138,11 +138,17 @@ for k=1:dd
 
        l_ind=[];
        ancs=initial_ancs;
-       temp_prior=prior;
-       temp_prior(isnan(temp_prior(:)))=0;
-       action_array=[1:size(prior,1)*size(prior,2)];
-       [l_ind]=datasample(action_array,ancs,'Replace',false,'Weights',temp_prior(:) );
-       [omega_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
+    
+       % sample till all the first n anchors are non-boundary
+       % actions
+       
+        temp_prior=prior;
+        temp_prior(isnan(temp_prior(:)))=0;
+        action_array=[1:size(prior,1)*size(prior,2)];
+        [l_ind]=datasample(action_array,ancs,'Replace',false,'Weights',temp_prior(:) );
+    
+        [omega_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
+    
        r_anchors=Rs(r_temp_ind);
        omega_anchors=Os(omega_temp_ind);
               
@@ -157,8 +163,10 @@ for k=1:dd
 
        % keep track of mean heading and speeds
        midT=round(numel(rs_)/2);
+
        om_main(k)=(omegas_(midT));
        r_loop(k)=(rs_(midT));
+       
        r_anchors_struct{k}=(r_anchors);
        omega_anchors_struct{k}=(omega_anchors);
 
@@ -182,16 +190,17 @@ for k=1:dd
 
 
    % compute surprise based on likelihood and prior
-    [cache_flag,surpW,surpF]=surprise(L1,target_hit(k),prior,[omegas_',rs_'],Rs,Os,sigma_ridge,relative_surprise,env,min_radius_around_home,wrkrs,arena_home_mask);
+    [cache_flag,surpW,surpF]=surprise_Ann(L1,target_hit(k),prior,[omegas_',rs_'],Rs,Os,sigma_ridge,relative_surprise,env,min_radius_around_home,wrkrs,arena_home_mask);
     surprise_flat(k)=surpF;
     surprise_working(k)=surpW;
   
    %disable caching by setting the flag always to 0
 %     cache_flag=0;
+   %disable caching by setting the flag always to 0
 
    if(~cache_flag)
          
-   %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
+                %% Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
          [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),rs_,omegas_,sigma_ridge,Rs,Os,prior,wrkrs,arena_home_mask);
                   
          % leak in the posterior certanity every time step; implemented
@@ -219,8 +228,9 @@ for k=1:dd
       
       else
       
-         r_anchors=[0, r_anchors, 0];
+          r_anchors=[0 r_anchors 0];
          omega_anchors=[0, omega_anchors, 0];
+         %% the generative model connecting anchors with a smooth trajectory 
          [rs_new,omegas_new,pos_xnew,pos_ynew]= trajectory_planner(r_anchors,omega_anchors,env,clearnce,Os,Rs,ka,w2_L,tol_vec(k+1));
       
       end

@@ -1,4 +1,4 @@
-function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,lin_idx_bounds,percentile,dist_criterion)
+function [mu_anchors,omega_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,As,Os,percentile)
 
 % find all peaks in a 3x3 neighborhood around every pixel in the posterior
 
@@ -53,10 +53,6 @@ true_peaks=nxt_compar_bin_posterior;
 
 [omegas,mus]= find(true_peaks);
 
-lin_idx1=sub2ind(size(posterior),omegas,mus);
-not_peaks=find(ismember(lin_idx1,lin_idx_bounds));      
-omegas(not_peaks)=[];
-mus(not_peaks)=[];
 
 if (isempty(mus))
     l_ind=[];
@@ -105,78 +101,5 @@ else
     omega_temp_ind= omegas( top_anchrs(peaks_)  );
 end
   
-   %% remove anchors within sigma from each other
-%   
-%     n=anchors_no;
-% 
-%     xx= repmat(mu_anchors,n,1);
-%     xx=xx(:);
-%     xx2=repmat(omega_anchors,n,1);
-%     xx2=xx2(:);
-% 
-%     % yy= (nn)x1 column vector of the first dimension in anchors: mu
-%     % repeat mu_anchors' vector 10 times and omega_anchors' vector also
-%     % 10x
-%     yy=repmat(mu_anchors',n,1);
-%     yy2= repmat(omega_anchors',n,1);
-% 
-%     D1=[xx xx2]-[yy yy2];
-%     rng_As=As(end)-As(1);
-%     rng_Os=Os(end)-Os(1); 
-%     D_= (D1)*[1/((rng_As)^2) 0; 0  1/((rng_Os)^2)]*(D1');
-% 
-%     D=sqrt(reshape(diag(D_),[n n]));
-%     D(D==0)=nan;
-%     
-%     
-%     [vmin,ind_min]= (min(D(:)));
-%     % D is nxn matrix. 
-%     [r,c]=ind2sub(size(D),ind_min);
-% 
-%     while ((vmin<dist_criterion))
-% 
-%         [~,ichs]=max( [posterior(omega_temp_ind(r),mu_temp_ind(r)), posterior(omega_temp_ind(c),mu_temp_ind(c))]);
-% 
-%         temm=[r,c];
-%         ichosen=temm(ichs);
-%         
-%         
-%         %
-%         choices=[1,2];
-%         not_chosen=choices(choices~=ichs);
-%         omega_temp_ind(temm(not_chosen))=[];
-%         mu_temp_ind(temm(not_chosen))=[];
-% 
-%         mu_anchors(temm(not_chosen))=[];
-%         omega_anchors(temm(not_chosen))=[];
-%      
-%         %
-%        
-%         n=size(mu_anchors,2);
-% 
-%         % recalc D 
-%         xx= repmat(mu_anchors,n,1);
-%         xx=xx(:);
-%         xx2=repmat(omega_anchors,n,1);
-%         xx2=xx2(:);
-%     
-%         yy=repmat(mu_anchors',n,1);
-%         yy2= repmat(omega_anchors',n,1);
-%     
-%         D1=[xx xx2]-[yy yy2];
-%     
-%         D_= (D1)*[1/((rng_As)^2) 0; 0  1/((rng_Os)^2)]*(D1');
-%     
-%         D=sqrt(reshape(diag(D_),[n n]));
-%         D(D==0)=nan;
-%         
-%         
-%         [vmin,ind_min]= (min(D(:)));
-%          % D is nxn matrix. 
-%         [r,c]=ind2sub(size(D),ind_min);
-% 
-%     end
-%    anchors_no=size(mu_anchors,2);
-
 
 end
