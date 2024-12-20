@@ -33,8 +33,6 @@ ka,w20,tol_radius)
 
 exitflag=0;
 dt=0.01; % time discretization for simulating a path between 2 anchors.
-x_=[];
-y_=[];
 arena=env.arena_dimensions;
 rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));

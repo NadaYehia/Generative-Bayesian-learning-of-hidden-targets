@@ -1,11 +1,15 @@
 
-function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Os,dist_criterion,theta_bounds, r_bounds,r_home,percentile,...
-    bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale)
+function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Os,dist_criterion,theta_bounds,...
+                                                                   r_bounds,r_home,percentile,radii_noise_offset,...
+                                                                   radii_noise_slope,angular_noise)
 
+% this function samples anchors from the current posterior, it can jitter
+% them with noise (if applicable) then outputs them for the trajectory
+% planner 
 
 if(strcmp(sampler,'proportional'))
 
-    [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Os,dist_criterion,lin_idx_bounds);
+    [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Os,dist_criterion);
 else
     [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,initial_ancs,Rs,Os,percentile);
  
@@ -17,9 +21,9 @@ end
 
 for f=1:anchors_no
 
-    theta_anchors(f)= theta_anchors(f) +(randn(1)*bestNormalFitAngleScale);
+    theta_anchors(f)= theta_anchors(f) +(randn(1)*angular_noise);
     
-    scale= bestFitDataOffset+bestFitMeanToScaleRatio*r_anchors(f);
+    scale= radii_noise_offset+radii_noise_slope*r_anchors(f);
     r_anchors(f)= r_anchors(f)+(scale*randn(1));
 
 end
