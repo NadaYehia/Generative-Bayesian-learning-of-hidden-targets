@@ -1,13 +1,11 @@
-function [flg,Sw,Sf]=surprise(L1,outcome, current_posterior,current_actions,Rs,Os,sigma_ridge,h0,...
-    env,min_radius_around_home,wrkrs,arena_home_mask)
+function [flg,Sw,Sf]=surprise(L1,outcome, current_posterior,h0,arena_home_mask)
     
 
-if(outcome==1)
-    L1=L1;
-else
+if(outcome==0)
+ 
     L1=(1-L1);
 end
-%%
+
 
 flat_prior=arena_home_mask./(nansum(arena_home_mask(:)));
 

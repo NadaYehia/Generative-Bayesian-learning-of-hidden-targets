@@ -1,5 +1,5 @@
 function [posterior]=Bayes_update_for_actions_params...
-    (L1,target_hit,mus_curr,omegas_curr,sigma_ridge,As,Os,prior,wrkrs,arena_home_mask)
+    (L1,target_hit,prior)
 
 
 if (target_hit==1)

@@ -1,10 +1,10 @@
-function [bw,is,js]=convert_poly_to_mask(rs,omega,sizee,Rs,Omegas)
+function [bw,is,js]=convert_poly_to_mask(r_boundary,theta_boundary,sizee,Rs,Ths)
 
 
 
-for s=1:numel(rs)
-    [~,is(s)]=(min(abs(Omegas-omega(s))));
-    [~,js(s)]=(min(abs(Rs-rs(s))));
+for s=1:numel(r_boundary)
+    [~,is(s)]=(min(abs(Ths-theta_boundary(s))));
+    [~,js(s)]=(min(abs(Rs-r_boundary(s))));
     
 end
 

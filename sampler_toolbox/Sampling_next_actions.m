@@ -1,6 +1,6 @@
 
-function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Os,dist_criterion,theta_bounds,...
-                                                                   r_bounds,r_home,percentile,radii_noise_offset,...
+function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,dist_criterion,r_bounds,...
+                                                                   theta_bounds,r_home,percentile,radii_noise_offset,...
                                                                    radii_noise_slope,angular_noise)
 
 % this function samples anchors from the current posterior, it can jitter
@@ -9,9 +9,9 @@ function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,s
 
 if(strcmp(sampler,'proportional'))
 
-    [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Os,dist_criterion);
+    [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Ths,dist_criterion);
 else
-    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,initial_ancs,Rs,Os,percentile);
+    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,initial_ancs,Rs,Ths,percentile);
  
 end
 
@@ -38,7 +38,7 @@ theta_anchors(theta_anchors<(-pi/2))=-pi/2;
 % to the maximum radius (arena bound) at this angle
 for f=1:anchors_no
 
-    theta_minus_bounds= abs(theta_anchors(f) -Os(theta_bounds));
+    theta_minus_bounds= abs(theta_anchors(f) -Ths(theta_bounds));
     [minvalue]=min(theta_minus_bounds );
     
    [indx]= find(theta_minus_bounds==minvalue);

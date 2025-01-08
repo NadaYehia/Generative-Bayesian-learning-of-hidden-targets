@@ -1,6 +1,6 @@
 % workout the arena boundaries in x,y to mu and omega actions
 
-function [r_boundary,omega_boundary]=find_actions_bounds(arena,spc)
+function [r_boundary,theta_boundary]=find_actions_bounds(arena,spc)
 
 corner=[];
 corner(1,:)=[arena(1) arena(3)];
@@ -40,6 +40,6 @@ x_op=[x_op,xq];
 y_op=[y_op,vq];
 
 
-[r_boundary,omega_boundary]= convert_xy_r_angle(x_op,y_op);
+[r_boundary,theta_boundary]= convert_xy_r_angle(x_op,y_op);
 
 end
