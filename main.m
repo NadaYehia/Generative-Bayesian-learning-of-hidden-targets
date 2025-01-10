@@ -24,7 +24,7 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
 sigma_ridge=7.5; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
 
-ags=20;   %number of agents to run
+ags=5;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -57,17 +57,17 @@ ka=0.01;
 draw_flg=0;
 
 % planner optimizer parameters
-w2_L=1000;
+w2_L=10000;
 tol_radius=0.03; % +/-30mm
 a_entropy=1; %1mm tighter or wider for 1unit change in entropy
-target_order=[1];
+target_order=[1 2];
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 percentile_peak_sampler=0;
 min_radius_around_home=50;
-relative_surprise= 26;
+relative_surprise= 22;
 cache_flag=0;
-spc=10000;
+spc=100000;
 
 [prior_global,theta_bounds,r_bounds]= set_control_actions_space(Rs,Ths,env.arena_dimensions,spc);
 prior_global=boolean(prior_global);
@@ -85,7 +85,7 @@ prior_global=arena_home_mask./(nansum(arena_home_mask(:)));
 %% SIMULATION starts
 
 tic
-for agent=1:ags
+parfor agent=1:ags
 
 t_lst_caching=1;
 initial_ancs=10;
@@ -175,7 +175,7 @@ for k=1:dd
     surprise_working(k)=surpW;
   
    %disable caching by setting the flag always to 0
-   %     cache_flag=0;
+%        cache_flag=0;
 
    if(~cache_flag)
        
@@ -264,7 +264,6 @@ for k=1:dd
        f.Position=[100 100 200 200];
        patch(arena.x,arena.y,[1 1 1]); hold on;
        patch(targets(target_num).x,targets(target_num).y,[0.85 0.9 0.9]);
-       patch(obstacle_.x,obstacle_.y,[0.5 0.5 0.5]);
        hold on, plot(pos_x',pos_y','k','LineWidth',1.5);
        hold on,scatter(pos_x,pos_y,5,[1:numel(pos_y)],'filled');
        set(gca,'XTick',[]);

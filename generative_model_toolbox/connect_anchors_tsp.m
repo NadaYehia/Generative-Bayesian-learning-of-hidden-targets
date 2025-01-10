@@ -1,30 +1,25 @@
 % connect action anchors using Travelling salesman problem formulation
-%% Created by Nada Abdelrahman, adapted from Matlab optimization toolbox
-%mu_anchors: nx1 x-coord column vector
-%omega_anchors:nx1 y-coord column vector
+% Created by Nada Abdelrahman, adapted from Matlab optimization toolbox
 
-function [Gsol, mu_anchors, omega_anchors]= connect_anchors_tsp(mu_anchors_i,omega_anchors_i,nStops,As,Omegas)
+
+function [Gsol, r_anchors, theta_anchors]= connect_anchors_tsp(r_anchors_i,theta_anchors_i,nStops,Rs,Ths)
      
-    mu_anchors=mu_anchors_i;
-    omega_anchors=omega_anchors_i;
+    r_anchors=r_anchors_i;
+    theta_anchors=theta_anchors_i;
     
     idxs = nchoosek(1:nStops,2);
+    r_anchors_ptS=r_anchors(idxs(:,1));
+    theta_anchors_ptS=theta_anchors(idxs(:,1));
 
-    %nxn distance matrix of all anchors points
-    %dist=pdist2([mu_anchors' omega_anchors'],[mu_anchors',omega_anchors'],"seuclidean");
-
-    mu_anchors_ptS=mu_anchors(idxs(:,1));
-    omega_anchors_ptS=omega_anchors(idxs(:,1));
-
-    mu_anchors_ptE=mu_anchors(idxs(:,2));
-    omega_anchors_ptE=omega_anchors(idxs(:,2));
+    r_anchors_ptE=r_anchors(idxs(:,2));
+    theta_anchors_ptE=theta_anchors(idxs(:,2));
 
     for k=1:size(idxs,1)
-        delta_mu= (mu_anchors_ptS(k) -mu_anchors_ptE(k))^2;
-        delta_om= (omega_anchors_ptS(k)- omega_anchors_ptE(k))^2;
-        scaleA_sq=(std(As))^2;
-        scaleOm_sq=(std(Omegas))^2;
-        dist(k)= sqrt( (delta_mu/scaleA_sq) + (delta_om/scaleOm_sq)     );
+        delta_r= (r_anchors_ptS(k) -r_anchors_ptE(k))^2;
+        delta_theta= (theta_anchors_ptS(k)- theta_anchors_ptE(k))^2;
+        scaleR_sq=( Rs(end)-Rs(1) )^2;
+        scaleTh_sq=(Ths(end)-Ths(1))^2;
+        dist(k)= sqrt( (delta_r/scaleR_sq) + (delta_theta/scaleTh_sq)     );
     
     end
 
@@ -84,23 +79,10 @@ function [Gsol, mu_anchors, omega_anchors]= connect_anchors_tsp(mu_anchors_i,ome
         x_tsp = logical(round(x_tsp));
 %         Gsol = graph(idxs(x_tsp,1),idxs(x_tsp,2),[],numnodes(G));
         Gsol = graph(idxs(x_tsp,1),idxs(x_tsp,2)); % Also works in most cases
-        
-%         % Visualize result
-%         hGraph.LineStyle = 'none'; % Remove the previous highlighted path
-%         highlight(hGraph,Gsol,'LineStyle','-')
-%         drawnow
-        
+     
         % How many subtours this time?
         tourIdxs = conncomp(Gsol);
         numtours = max(tourIdxs); % number of subtours
-%         fprintf('# of subtours: %d\n',numtours)
        end
-
-
-
-
-
-
-
 
 end

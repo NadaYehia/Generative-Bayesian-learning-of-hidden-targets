@@ -37,7 +37,7 @@ arena=env.arena_dimensions;
 rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));
 tto=0;
-MaxTrials=9; % Maximum number of optimization runs
+MaxTrials=10; % Maximum number of optimization runs
   
 kd=[clearnce, zeros(1,numel(r_anchors)-2)]; % (n-1) row vector of the initial 
                                             % heading angles of the (n-1) 
@@ -94,8 +94,9 @@ while(exitflag<=0)
      
     if(tto>MaxTrials) % if failed to find feasible solution
         % use input {r,theta anchors} in the next step.  
-        optimal_para=[];
         optimal_para=[kd,r0,theta0];
+        [~]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w2,dt);
+
         break;
     end
       
