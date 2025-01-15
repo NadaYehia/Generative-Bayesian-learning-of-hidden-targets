@@ -18,6 +18,6 @@ p_working=nansum(p_working_2d(:));
 
 Sw=-log2(p_working);
 Sf=-log2(p_flat);
-flg=(Sw/Sf)>h0;
-
+%flg=(Sw/Sf)>h0;
+flg=Sw>h0;
 end

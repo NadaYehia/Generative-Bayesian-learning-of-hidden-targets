@@ -1,5 +1,5 @@
-function [r,theta,x_op,y_op]=trajectory_planner(r_anchors,theta_anchors,env,clearnce,Os,Rs,...
-ka,w20,tol_radius)
+function [r,theta,x_op,y_op,exitflag]=trajectory_planner(r_anchors,theta_anchors,env,clearnce,Os,Rs,...
+ka,w20,tol_radius,r_home)
 
 % INPUTS: {r,theta} anchors: r_anchors, theta_anchors
 %         Environment boundaries: env Object
@@ -36,9 +36,7 @@ dt=0.01; % time discretization for simulating a path between 2 anchors.
 arena=env.arena_dimensions;
 rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));
-tto=0;
-MaxTrials=10; % Maximum number of optimization runs
-  
+
 kd=[clearnce, zeros(1,numel(r_anchors)-2)]; % (n-1) row vector of the initial 
                                             % heading angles of the (n-1) 
                                             % segments connecting between 
@@ -48,6 +46,9 @@ kd=[clearnce, zeros(1,numel(r_anchors)-2)]; % (n-1) row vector of the initial
 
 theta0=theta_anchors+(pi/2);
 r0=r_anchors;
+r0(r0==0)=0.00001;
+theta0(theta0==pi)=pi-(0.00001);
+theta0(theta0==0)=0+(0.00001);
 
 % angles of the (n-1) vectors connecting every anchor pair in{n anchors}:
 for n=2:numel(r0)
@@ -74,33 +75,27 @@ end
 
 MFE=30000;
 Itrs=1000;
-opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,"EnableFeasibilityMode",true);
+opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,'Display','notify');
 w2=w20;
 ri=r0;
 thetai=theta0;
 
-while(exitflag<=0)
 
-    [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
-        optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt);
-    
-    if(exitflag<=0 )
-        %noise to the starting point, very small values
-        ri=r0+0.0001*randn(1);
-        thetai=theta0+0.0001*randn(1);
-    end
+[optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
+    optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt,r_home);
 
-    tto=tto+1;
-     
-    if(tto>MaxTrials) % if failed to find feasible solution
-        % use input {r,theta anchors} in the next step.  
+if(exitflag<=0 )
+    fprintf('infeasible solution trial')
+    if(~isempty(output.bestfeasible))
+        optimal_para=output.bestfeasible.x;
+        [loss1]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w2,dt);
+    else
         optimal_para=[kd,r0,theta0];
-        [~]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w2,dt);
-
-        break;
+        [loss2]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w2,dt);
+    
     end
-      
 end
+
 
 % ERROR CHCK for optimized parameters output
 if(any(isnan(optimal_para)) )
@@ -112,7 +107,6 @@ if(any(isnan(optimal_para)) )
 end
 
 
-
 x_op=optimizer_obj.optimized_x;
 y_op=optimizer_obj.optimized_y;
 
@@ -120,6 +114,5 @@ y_op=optimizer_obj.optimized_y;
 %% Compute {r,omegas} from the optimized path {x,y} points
  [r,theta]= convert_xy_r_angle(x_op,y_op);
   
-
 
 end

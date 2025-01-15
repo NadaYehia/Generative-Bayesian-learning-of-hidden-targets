@@ -21,12 +21,30 @@ classdef OptimizerClass< handle
         s=no_anchors+no_anchors;
         theta=p(s:end);
         
+        for n=2:numel(r)
+
+           heading_offset(n-1)= theta(n-1)+atan2( r(n)*sin(theta(n)-theta(n-1)),...
+                                    r(n)*cos(theta(n)-theta(n-1)) -r(n-1)  );
+
+        end
+        
+        % calculate the difference in heading angles at the anchor points.
+        % dOmega= theta at t=1 of the current segment - theta at t=T of the 
+        % previous segment.
+        for n=2:numel(r)-1
+
+            hd_previous=wrapToPi(heading_offset(n-1)+ k_d0(n-1));
+            hd_next=wrapToPi(heading_offset(n)-k_d0(n));
+            domega=wrapToPi(hd_next-hd_previous);
+            K(n)=abs(domega);
+        end
+
+
+
         for n=1:size(r,2)-1
         
         vx=(-r(n)*cos(theta(n))) +(r(n+1)*cos(theta(n+1)));
         vy=(-r(n)*sin(theta(n))) +(r(n+1)*sin(theta(n+1)));
-        
-        heading_offset= (atan2(vy,vx ));
         
         if(n~=1)
            
@@ -61,7 +79,7 @@ classdef OptimizerClass< handle
         
         speed= [sin(w.*t1)];
         speed= (vmax).*speed;
-        heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset) -(k*tol));
+        heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset(n)) -(k*tol));
         heading=wrapToPi(heading);
         
         % calculate the x&y points of a trajectory segment
@@ -82,16 +100,7 @@ classdef OptimizerClass< handle
         pos_x( find(pos_x<arena(1)) )=arena(1);
         pos_y( find(pos_y>arena(4)) )=arena(4); 
         pos_y( find(pos_y<arena(3)) )=arena(3); 
-        
-        
-        % calculate the difference in heading angles at the anchor points.
-        % dOmega= theta at t=1 of the current segment - theta at t=T of the 
-        % previous segment.
-        
-        if (n~=1)
-            domega=wrapToPi(heading(1)-heading_conca(end));
-            K(n)=abs(domega);
-        end
+       
         
         x_op=[x_op, pos_x(1:end)];
         y_op=[y_op, pos_y(1:end)];
@@ -112,7 +121,7 @@ classdef OptimizerClass< handle
         % sum of anglular changes at the anchor points
         kappa=sum(K);
         % loss function= path length+ angular changes at anchor points
-        total_cost= (Pl)+w2*( kappa);
+        total_cost= 1e-8*[(Pl)+w2*( kappa)];
         
         % ERROR CHCK
         if(isnan(Pl))

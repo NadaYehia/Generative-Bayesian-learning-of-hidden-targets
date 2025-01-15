@@ -24,7 +24,7 @@ targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
 sigma_ridge=7.5; %uncertainity in the value of the action parameters executed.
 leak_sigma=[1 1]; % leak in the posterior
 
-ags=5;   %number of agents to run
+ags=50;   %number of agents to run
 n=100;    %number of samples in speed space and angle space.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -57,15 +57,17 @@ ka=0.01;
 draw_flg=0;
 
 % planner optimizer parameters
-w2_L=10000;
-tol_radius=0.03; % +/-30mm
+min_tol=0.01;
+w2_L=1e5;
+tol_radius=0.05; % +/-30mm
 a_entropy=1; %1mm tighter or wider for 1unit change in entropy
 target_order=[1 2];
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 percentile_peak_sampler=0;
 min_radius_around_home=50;
-relative_surprise= 22;
+% relative_surprise= 14;
+working_mem_surprise=4.7;
 cache_flag=0;
 spc=100000;
 
@@ -139,7 +141,7 @@ for k=1:dd
        
        [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[0  theta_anchors]',initial_ancs+1,Rs,Ths);
        [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-       [rs_,thetas_,pos_x,pos_y]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k));
+       [rs_,thetas_,pos_x,pos_y,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k),Rs(min(c_home)));
        anchors_no(k)=initial_ancs;
 
        % keep track of mean heading and speeds
@@ -170,7 +172,7 @@ for k=1:dd
     L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
     
     % 3- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
-    [cache_flag,surpW,surpF]=surprise(L1,target_hit(k),prior,relative_surprise,arena_home_mask);
+    [cache_flag,surpW,surpF]=surprise(L1,target_hit(k),prior,working_mem_surprise,arena_home_mask);
     surprise_flat(k)=surpF;
     surprise_working(k)=surpW;
   
@@ -182,17 +184,16 @@ for k=1:dd
          
         % 4- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
         [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
-        
+
         % leak in the posterior certanity every time step; implemented
         % via a 2D gaussian blur
         %          new_posterior=myconv2(posterior,leak_sigma);
         %          posterior=new_posterior;
         
         % compute entropy and reduce tolerance radius
-        I=my_entropy(posterior);
-        Ivec(k+1)=I;
-        dI=Ivec(k+1)-Ivec(k);
-        tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(1e-04);
+%         I=my_entropy(posterior);
+%         Ivec(k+1)=I;
+%         tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(min_tol);
         
         % 5- sampler function for the next actions calling either: proportional or peak sampler
         [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
@@ -204,11 +205,11 @@ for k=1:dd
         if(anchors_no(k+1)>1)
             [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
             [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-            [rs_new,thetas_new,pos_xnew,pos_ynew]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k+1));
+            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
         else
             r_anchors=[0, r_anchors, 0];
             theta_anchors=[0, theta_anchors, 0];
-            [rs_new,thetas_new,pos_xnew,pos_ynew]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k+1));
+            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
         end
         prior=posterior;
 
@@ -220,10 +221,9 @@ for k=1:dd
         caching_times_agent(k)=1;
         active_prior=prior_global;
 
-        I=my_entropy(active_prior);
-        Ivec(k+1)=I;
-        dI=Ivec(k+1)-Ivec(k);
-        tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(1e-04);
+%         I=my_entropy(active_prior);
+%         Ivec(k+1)=I;
+%         tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(min_tol);
         
         % 5'- sampler function for the next actions calling either: proportional or peak sampler
         [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(active_prior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
@@ -235,12 +235,12 @@ for k=1:dd
         if(anchors_no(k+1)>1)
             [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
             [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-            [rs_new,thetas_new,pos_xnew,pos_ynew]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k+1));
+            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
             
         else
             r_anchors=[0 r_anchors 0];
             theta_anchors=[0, theta_anchors, 0];
-            [rs_new,thetas_new,pos_xnew,pos_ynew]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k+1));
+            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
         end
         prior=active_prior;
 

@@ -1,6 +1,6 @@
 
 function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length_and_smoothness(r,theta,k_d0,...
-                                                             arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt)
+                                                             arena,ka,w2,tol_radius,rg_r,rg_th,opts,dt,r_home)
 
 no_anchors=numel(r);
 
@@ -25,8 +25,10 @@ lb(1:no_anchors-1)=-inf;
 % anchor
 lb(1)=-( pi-(theta(2)) );
 
-% lower bound for any anchor angle and radius =0.
+% lower bound for any anchor angle=0, home anchors radii=0, and radius of all anchors
+% 2nd to the second last is =r_home.
 lb_r_th=zeros(1,2*no_anchors);  
+lb_r_th(2:no_anchors-1)=repmat(r_home,1,no_anchors-2);
 lb(no_anchors:end)=lb_r_th;
 
 %% upper bounds on parameters:
