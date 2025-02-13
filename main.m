@@ -50,72 +50,56 @@ bestFitMeanToScaleRatio=c(1);
 bestNormalFitAngleScale=0; % no hd angle noise
 
 ka=24;
-draw_flg=1;
+draw_flg=0;
 
 % planner optimizer parameters
 w1_L=1;
 w2_L=1e3;
 w3_L=1;
-tol_radius=0.02; % +/-30mm
+tol_radius=0.01; % +/-30mm
 target_order=[1 2 3 4 5];
 kmerge=1;
 merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
 
 min_radius_around_home=50;
-working_mem_surprise=0.9;
+working_mem_surprise=0.85;
 cache_flag=0;
 
-[prior_global,theta_bounds,r_bounds]= set_control_actions_space(Rs,Ths,env.arena_dimensions);
-prior_global=boolean(prior_global);
+[prior_flat,theta_bounds,r_bounds]= set_control_actions_space(Rs,Ths,env.arena_dimensions);
+prior_flat=boolean(prior_flat);
 %home radius to exclude
-[prior_exc_home,~,c_home]=semi_circle_around_home(prior_global,min_radius_around_home,Rs,Ths);
+[prior_exc_home,~,c_home]=semi_circle_around_home(prior_flat,min_radius_around_home,Rs,Ths);
 %home radius to exclude
 
-prior_global=prior_global&prior_exc_home;
-arena_home_mask=prior_global;
+prior_flat=prior_flat&prior_exc_home;
+arena_home_mask=prior_flat;
 naned_arena_home_mask=1-arena_home_mask;
 naned_arena_home_mask(find(naned_arena_home_mask))=nan;
 arena_home_mask=arena_home_mask+naned_arena_home_mask;
-prior_global=arena_home_mask./(nansum(arena_home_mask(:)));
+prior_flat=arena_home_mask./(nansum(arena_home_mask(:)));
 
-id_non_nan=find(~isnan(prior_global));
-base_pr_value=1e-40*prior_global(id_non_nan(1));
-percentile_peak_sampler=0;
 
-days_decay_rate=1000;
 %% SIMULATION starts
 delete(gcp('nocreate'))
 parpool(15);
 
 tic
-for agent=1:ags
+parfor agent=1:ags
 
-t_lst_caching=1;
 initial_ancs=6;
 dd=sum(env.blocks(target_order));
 surprise_flat=zeros(1,dd);
 surprise_working=zeros(1,dd);
 caching_times_agent=zeros(1,dd);
-mass_out_tent=zeros(1,dd);
-mass_outside_home=zeros(1,dd);
-posteriors_support_per_agent=zeros(1,dd);
 r_loop=zeros(1, dd );
 om_main=zeros(1, dd );      
 target_hit=[]; 
 hit_time = ones(1, dd  ); 
 anchors_no= zeros(1,dd);
-
-prior=prior_global;
-cched_memories=1;
-
+prior=prior_flat;
 r_anchors_struct={};
 theta_anchors_struct={};
 
-anchors_no_variance={};
-posterior_support_r_var=zeros(1,dd);
-posterior_support_omega_var=zeros(1,dd); 
-posterior_support_mu_entropy=zeros(1,dd);
-posterior_support_omega_entropy=zeros(1,dd);
 tol_vec=zeros(1,dd);
 Ivec=zeros(1,dd);
 t=1;
@@ -180,15 +164,16 @@ for k=1:dd
          
         % 4- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
         [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
-        
-        decayed_posterior=base_pr_value- ( (base_pr_value-posterior).*exp(-t/days_decay_rate) );
-        
+        K= ones(3);
+        decayed_posterior = nanconv2(posterior, K);
+        decayed_posterior=decayed_posterior.*prior_flat;
+
         posterior=decayed_posterior./nansum(decayed_posterior(:));
 
 
         % 5- sampler function for the next actions calling either: proportional or peak sampler
         [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
-        Rs(min(c_home)),percentile_peak_sampler,...
+        Rs(min(c_home)),...
         bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale);
         
         % 6- the generative model connecting a smooth trajectory through the
@@ -211,11 +196,11 @@ for k=1:dd
         % the environment might have changed and the agent reset its' prior to a flat prior. 
         t=1;
         caching_times_agent(k)=1;
-        active_prior=prior_global;
+        active_prior=prior_flat;
 
         % 5'- sampler function for the next actions calling either: proportional or peak sampler
         [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(active_prior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
-        Rs(min(c_home)),percentile_peak_sampler,...
+        Rs(min(c_home)),...
         bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale);
         % 6- the generative model connecting a smooth trajectory through the
         % anchors samples.
@@ -280,7 +265,6 @@ om_anchors_pop{agent}=theta_anchors_struct;
 tol_radii(agent,:)=tol_vec;
 I_agents(agent,:)=Ivec;
 caching_times(agent,:)=caching_times_agent;
-posteriors_support(agent,:)=posteriors_support_per_agent;
 surprise_working_agent(agent,:)=surprise_working;
 surprise_flat_agent(agent,:)=surprise_flat;
 
