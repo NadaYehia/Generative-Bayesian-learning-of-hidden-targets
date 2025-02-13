@@ -19,38 +19,38 @@ end
 
 %% add sampling noise:
 
-for f=1:anchors_no
-
-    theta_anchors(f)= theta_anchors(f) +(randn(1)*angular_noise);
-    
-    scale= radii_noise_offset+radii_noise_slope*r_anchors(f);
-    r_anchors(f)= r_anchors(f)+(scale*randn(1));
-
-end
+% for f=1:anchors_no
+% 
+%     theta_anchors(f)= theta_anchors(f) +(randn(1)*angular_noise);
+%     
+%     scale= radii_noise_offset+radii_noise_slope*r_anchors(f);
+%     r_anchors(f)= r_anchors(f)+(scale*randn(1));
+% 
+% end
 
 %% Confine the noisy to within the arena enclosure. 
 
-r_anchors(r_anchors<r_home)=r_home;
-theta_anchors(theta_anchors>(pi/2))=pi/2;
-theta_anchors(theta_anchors<(-pi/2))=-pi/2;
-
-% for theta anchors <pi/2 & >-pi/2, confine the maximum radius
-% to the maximum radius (arena bound) at this angle
-for f=1:anchors_no
-
-    theta_minus_bounds= abs(theta_anchors(f) -Ths(theta_bounds));
-    [minvalue]=min(theta_minus_bounds );
-    
-   [indx]= find(theta_minus_bounds==minvalue);
-
-    max_r_this_theta=max(Rs(r_bounds(indx)));
-
-    if(r_anchors(f)>max_r_this_theta)
-        r_anchors(f)=max_r_this_theta;
-    end
-
-    
-end
+% r_anchors(r_anchors<r_home)=r_home;
+% theta_anchors(theta_anchors>(pi/2))=pi/2;
+% theta_anchors(theta_anchors<(-pi/2))=-pi/2;
+% 
+% % for theta anchors <pi/2 & >-pi/2, confine the maximum radius
+% % to the maximum radius (arena bound) at this angle
+% for f=1:anchors_no
+% 
+%     theta_minus_bounds= abs(theta_anchors(f) -Ths(theta_bounds));
+%     [minvalue]=min(theta_minus_bounds );
+%     
+%    [indx]= find(theta_minus_bounds==minvalue);
+% 
+%     max_r_this_theta=max(Rs(r_bounds(indx)));
+% 
+%     if(r_anchors(f)>max_r_this_theta)
+%         r_anchors(f)=max_r_this_theta;
+%     end
+% 
+%     
+% end
 
 
 

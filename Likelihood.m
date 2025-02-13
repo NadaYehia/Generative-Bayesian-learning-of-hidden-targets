@@ -1,39 +1,42 @@
 function L1= Likelihood(r_,thetas_,sigma,Rs,Thetas)
 
 L1=zeros(size(Thetas,2),size(Rs,2));
+
+L1_keypt=gpuArray(zeros(size(L1,1),size(L1,2),numel(r_)));
+
 rgx=(Rs(end)-Rs(1));
 rgy=(Thetas(end)-Thetas(1));
 
 % express sigma in the normalized space.
-sigma=sigma/numel(Rs);
 
+cov=[sigma^2 0; 0 sigma^2];
 [X,Y]=meshgrid(Rs,Thetas);
 
-for key_pt=1:numel(r_)
-   
+
+parfor key_pt=1:numel(r_)
+
+    temp=zeros(size(L1));
+    
     % x and y are the action values
     % of the ith (r,theta) key point on the loop
     x=r_(key_pt);
     y=thetas_(key_pt);
     
-    % bin the x and y to the closest bins in Rs and Thetas
-
-    [~,idx_binX]=(min(abs(x-Rs)));
-    [~,idx_binY]=(min(abs(y-Thetas)));
+    for i=1:size(Y,1)
     
-    x_binned=Rs(idx_binX);
-    y_binned=Thetas(idx_binY);
+    Y_i=repmat(Y(i,1),1,size(X,2));
+    d=[(x-X(i,:))/rgx; (y-Y_i)/rgy];
 
-    % 2D Gaussian centered at x_binned, y_binned  
-    temp=(1/(2*pi*(sigma^2))).* exp(-(...
-        ( ( (X-x_binned)./rgx ).^2 + ( (Y-y_binned)./rgy ).^2  )./(2*(sigma^2)) ));
+    D= exp(-0.5*(d)'*(inv(cov))*(d));
+    temp(i,:)=diag(D);   
+    end
+
+    L1_keypt(:,:,key_pt)=temp;
     
-    L1=L1+temp;
-    temp=[];
+end
+L1=gather(sum(L1_keypt,3));
 
 end
 
 
-
-  
-end
+    

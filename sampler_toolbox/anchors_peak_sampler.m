@@ -67,7 +67,7 @@ if (isempty(rs))
 else
      lin_idx=sub2ind(size(posterior),thetas,rs);
      [vmax]=max(posterior(lin_idx));
-     top_anchrs=find(posterior(lin_idx)>=percentile*vmax);
+     top_anchrs=find(posterior(lin_idx)>=(percentile*vmax));
      [sorted_peaks,i_sorted_peaks]=sort(posterior(lin_idx(top_anchrs)),'descend');  
     
      if (numel(top_anchrs)==1)
@@ -80,6 +80,13 @@ else
      r_anchors=Rs(rs( top_anchrs(peaks_)  ));
      theta_anchors=Ths(thetas( top_anchrs(peaks_)  ));
      anchors_no=size(r_anchors,2);
+
+
+     % randomise the order of the returned anchors each time.
+     random_indices=randperm(numel(r_anchors));
+     r_anchors=r_anchors(random_indices);
+     theta_anchors=theta_anchors(random_indices);
+
 end
   
 
