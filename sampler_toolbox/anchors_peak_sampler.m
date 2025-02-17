@@ -1,4 +1,4 @@
-function [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,Rs,Ths,percentile)
+function [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,Rs,Ths)
 
 % find all peaks in a 3x3 neighborhood around every pixel in the posterior
 
@@ -66,26 +66,19 @@ if (isempty(rs))
 
 else
      lin_idx=sub2ind(size(posterior),thetas,rs);
-     [vmax]=max(posterior(lin_idx));
-     top_anchrs=find(posterior(lin_idx)>=(percentile*vmax));
-     [sorted_peaks,i_sorted_peaks]=sort(posterior(lin_idx(top_anchrs)),'descend');  
+     [sorted_peaks,i_sorted_peaks]=sort(posterior(lin_idx),'descend');  
     
-     if (numel(top_anchrs)==1)
+     if (numel(lin_idx)==1)
          an_no=1;
      else
-         an_no=floor(numel(top_anchrs)/2);
+         an_no=floor(numel(lin_idx)/2);
      end
 
-     peaks_=i_sorted_peaks(1:an_no); % half the peaks ranked
-     r_anchors=Rs(rs( top_anchrs(peaks_)  ));
-     theta_anchors=Ths(thetas( top_anchrs(peaks_)  ));
+     top_half_peaks=i_sorted_peaks(1:an_no); % half the peaks ranked
+     r_anchors=Rs(rs( top_half_peaks  ));
+     theta_anchors=Ths(thetas( top_half_peaks  ));
      anchors_no=size(r_anchors,2);
 
-
-     % randomise the order of the returned anchors each time.
-     random_indices=randperm(numel(r_anchors));
-     r_anchors=r_anchors(random_indices);
-     theta_anchors=theta_anchors(random_indices);
 
 end
   

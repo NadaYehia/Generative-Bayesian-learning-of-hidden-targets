@@ -4,11 +4,11 @@ ka,w1,w2,w3,tol_radius,r_home)
 
 %% Initalizations:
 
-dt=0.01; % time discretization for simulating a path between 2 anchors.
+dt=0.005; % time discretization for simulating a path between 2 anchors.
 arena=env.arena_dimensions;
 rg_r=abs(Rs(end)-Rs(1));
 rg_th=abs(Os(end)-Os(1));
-eps=1e-4;
+eps=1e-2;
 %kd=zeros(1,numel(r_anchors)-1); % (n-1) row vector of the initial 
                                             % heading angles of the (n-1) 
                                             % segments connecting between 
@@ -53,9 +53,14 @@ thetai=theta0;
     optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w1,w2,w3,tol_radius,rg_r,rg_th,opts,dt,r_home);
   
 if (exitflag<=0)
-        
-        optimal_para=[kd,r0,theta0];
+       
+        [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
+         optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w1,w2,w3,tol_radius,rg_r,rg_th,opts,dt,r_home);
+
+  if(exitflag<=0)
+        optimal_para=output.bestfeasible.x;
         [~]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w1,dt);
+  end
 
 else
 
