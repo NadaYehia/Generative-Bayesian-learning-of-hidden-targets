@@ -1,4 +1,5 @@
-function [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler (posterior,anchors_no_int,Rs,Ths)
+function [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler (posterior,Rs,Ths,anchors_no_int,min_local_diff,v_threshold,...
+    roi_size)
 
 % find all peaks in a 3x3 neighborhood around every pixel in the posterior
 
@@ -41,23 +42,20 @@ for j=1:8
     posterior_9Dtensor_first_lyr=nxt_compar_bin_posterior.*posterior_9Dtensor(:,:,1);
     posterior_9Dtensor_next_lyr=nxt_compar_bin_posterior.* posterior_9Dtensor(:,:,j+1);
     posterior_9Dtensor_next_lyr(isnan(posterior_9Dtensor_next_lyr))=0;
-
+    posterior_9Dtensor_first_lyr(isnan(posterior_9Dtensor_first_lyr))=0;
     nxt_compar_bin_posterior=(posterior_9Dtensor_first_lyr>posterior_9Dtensor_next_lyr);
     
 
 end
 
 true_peaks=nxt_compar_bin_posterior;
-
 [thetas,rs]= find(true_peaks);
 
-
 if (isempty(rs))
-     l_ind=[];
      ancs=anchors_no_int;
      temp_posterior=posterior;
      temp_posterior(isnan(temp_posterior))=0;
-     action_array=[1:size(posterior,1)*size(posterior,2)];
+     action_array=1:size(posterior,1)*size(posterior,2);
      [l_ind]=datasample(action_array,ancs,'Replace',false,'Weights',temp_posterior(:));
      [theta_temp_ind,r_temp_ind]=ind2sub(size(posterior),l_ind);
      r_anchors=Rs(r_temp_ind);
@@ -65,18 +63,26 @@ if (isempty(rs))
      anchors_no=size(r_anchors,2);
 
 else
-     lin_idx=sub2ind(size(posterior),thetas,rs);
-     [sorted_peaks,i_sorted_peaks]=sort(posterior(lin_idx),'descend');  
-    
-     if (numel(lin_idx)==1)
+%      lin_idx=sub2ind(size(posterior),thetas,rs);
+%      max_pr=max(posterior(lin_idx));
+%      lin_idx_filt=lin_idx( (posterior(lin_idx)>(v_threshold*max_pr)) );
+       
+       lin_idx_filt=filter_peaks_with_distance(thetas,rs,posterior,roi_size);
+
+%      lin_idx_filt=filter_peaks(thetas,rs,posterior,min_local_diff);
+
+     [thetas_filt,rs_filt]=ind2sub(size(posterior),lin_idx_filt);
+     [~,i_sorted_peaks]=sort(posterior(lin_idx_filt),'descend');  
+     
+     if (numel(lin_idx_filt)==1)
          an_no=1;
      else
-         an_no=floor(numel(lin_idx)/2);
+         an_no=floor(numel(lin_idx_filt)/2);
      end
 
      top_half_peaks=i_sorted_peaks(1:an_no); % half the peaks ranked
-     r_anchors=Rs(rs( top_half_peaks  ));
-     theta_anchors=Ths(thetas( top_half_peaks  ));
+     r_anchors=Rs(rs_filt( top_half_peaks  ));
+     theta_anchors=Ths(thetas_filt( top_half_peaks  ));
      anchors_no=size(r_anchors,2);
 
 

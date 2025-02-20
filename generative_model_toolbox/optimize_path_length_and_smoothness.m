@@ -1,6 +1,6 @@
 
 function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length_and_smoothness(r,theta,k_d0,...
-                                                             arena,ka,w1,w2,w3,tol_radius,rg_r,rg_th,opts,dt,r_home)
+                                                             arena,ka,w1,tol_radius,rg_r,rg_th,opts,dt,r_home)
 
 no_anchors=numel(r);
 
@@ -22,9 +22,9 @@ p0=[k_d0,r_i, theta_i];
 
 %% lower bounds on parameters:
 
-% lower bound on the first heading vector offset: home anchor to first
+% lower bound on the first heading vector offset: home anchor to first-( pi-(theta(2)) )
 % anchor
-lb(1)=-( pi-(theta(2)) );
+lb(1)=0;
 
 % lower bound for any anchor angle=0, home anchors radii=0, and radius of all anchors
 % 2nd to the second last is =r_home.
@@ -37,8 +37,8 @@ lb(2+no_anchors:end)=zeros(1,no_anchors);
 %% upper bounds on parameters:
 
 % upper bound on the first heading vector offset: home anchor to first
-% anchor
-ub(1)=theta(2); 
+% anchortheta(2)
+ub(1)=pi; 
 
 % upper bounds for any anchor angle and radius is R and pi respec.
 ub(2:2+(no_anchors-1))=repmat(rg_r,1,no_anchors);
@@ -46,7 +46,7 @@ ub(2+no_anchors:end)=repmat(pi,1,no_anchors);
 ub(2+no_anchors-1)=0;
 ub(2)=0;
 %
-optimizer_obj=OptimizerClass_Pl( );
+optimizer_obj=OptimizerClass( );
 
 [optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)optimizer_obj.my_loss(p,arena,ka,no_anchors,w1,dt) ...
     ,p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th,arena),opts);
@@ -130,12 +130,12 @@ for n=2:no_anchors-1
         %if jittered anchor angle is greater than pi or less than 0
 
         %set it to ~ pi
-        if(theta_jitt(n)>pi)
+        if(theta_jitt(n)>=pi)
             theta_jitt(n)=pi-(1e-2);
         end
 
         %set it to ~ 0
-        if (theta_jitt(n)<0)
+        if (theta_jitt(n)<=0)
             theta_jitt(n)=0+(1e-2);
         end
 

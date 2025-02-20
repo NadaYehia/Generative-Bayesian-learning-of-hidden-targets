@@ -1,7 +1,7 @@
 
 function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,dist_criterion,theta_bounds,...
                                                                    r_bounds,r_home,radii_noise_offset,...
-                                                                   radii_noise_slope,angular_noise)
+                                                                   radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size)
 
 % this function samples anchors from the current posterior, it can jitter
 % them with noise (if applicable) then outputs them for the trajectory
@@ -11,7 +11,7 @@ if(strcmp(sampler,'proportional'))
 
     [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Ths,dist_criterion);
 else
-    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,initial_ancs,Rs,Ths);
+    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,Rs,Ths,initial_ancs,min_local_diff,pr_thresh,roi_size);
  
 end
 

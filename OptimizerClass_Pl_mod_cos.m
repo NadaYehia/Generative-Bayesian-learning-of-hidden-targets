@@ -1,5 +1,5 @@
 
-classdef OptimizerClass_Pl< handle
+classdef OptimizerClass_Pl_mod_cos< handle
     properties
         optimized_x=[];
         optimized_y=[];
@@ -20,14 +20,15 @@ classdef OptimizerClass_Pl< handle
         k_d=zeros(1,no_anchors-1);
         k_d(1)=k_d0;
 
-        for n=2:numel(r)
+         % theta(n-1)+atan2( r(n)*sin(theta(n)-theta(n-1)),...
+                                   % r(n)*cos(theta(n)-theta(n-1)) -r(n-1)  );
+        for n=1:numel(r)-1
 
-           heading_offset(n-1)= theta(n-1)+atan2( r(n)*sin(theta(n)-theta(n-1)),...
-                                    r(n)*cos(theta(n)-theta(n-1)) -r(n-1)  );
+           heading_offset(n)= atan2((r(n+1)*sin(theta(n+1)))-(r(n)*sin(theta(n))),...
+               (r(n+1)*cos(theta(n+1)))-(r(n)*cos(theta(n))));
 
         end
         
-
 
         for n=1:size(r,2)-1
         
@@ -41,41 +42,37 @@ classdef OptimizerClass_Pl< handle
             % the offset of the current heading vector kd(n) at time t equal to the 
             % the current heading offset - heading angle at t-1.
              
-            last_heading_previous_seg=wrapToPi(heading_offset(n-1)+k_d(n-1)); 
-            k_d(n)=wrapToPi(heading_offset(n)- last_heading_previous_seg);
+            last_heading_previous_seg=wrapToPi(heading_offset(n-1)+(pi/2)-k_d(n-1)); 
+            k_d(n)=wrapToPi((last_heading_previous_seg)-(heading_offset(n)-(pi/2)));
             
-            k_d(n)=wrapToPi(k_d(n));
-            tol=abs(k_d(n));
-            k=sign(k_d(n));
-            epsi=((tol-pi/2));
-             
+           
         else
             
             k_d(1)=wrapToPi(k_d(1));
-            k=sign(k_d(1));
-            tol=abs(k_d(1));
-            epsi=((tol-pi/2));
+            
         end
         
         
         eucl_dist(n)=sqrt(vx^2 +vy^2);
-        vmax_n=ka*((4*pi)+(4*epsi));
-        vmax_d= (pi)*(sinc(epsi/pi));
+        
+        vmax_n=ka*(pi-(2*k_d(n)))*(pi+(2*k_d(n)))*((3*pi)-(2*k_d(n)));
+
+        vmax_d= 8*(pi^2)*(cos(k_d(n)));
+
         vmax= (vmax_n/vmax_d);
         
         T=eucl_dist(n)/ka;
         
-            if(~isreal(T))
-                error('Time cant be complex, sinc function is outside pi and -pi');
+            if((vmax==0))
+                error('velocity is 0: check your calculations');
             end
         
         % use the functional form to produce x,y points in space
-        w=(2*pi)/(T);
-        t1=[0:dt:T/2];
+        t1=[0:dt:T];
         
-        speed= [sin(w.*t1)];
-        speed= (vmax).*speed;
-        heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset(n)) -(k*tol));
+        speed=(1-cos((2*pi*t1)/T));
+        speed=vmax.*speed;
+        heading=((pi-(2*k_d(n)))/T).*t1 + heading_offset(n)-(pi/2)+k_d(n);
         heading=wrapToPi(heading);
         
         % calculate the x&y points of a trajectory segment
@@ -91,14 +88,15 @@ classdef OptimizerClass_Pl< handle
         pos_x=cumsum(dx);
         pos_y=cumsum(dy);
         
-
+        Pl(n)=( sum(vecnorm([diff(pos_x)' diff(pos_y)'],2,2)) );
+        
         % confine the trajectory segment to the arena enclosure
         pos_x( find(pos_x>arena(2)) )=arena(2); 
         pos_x( find(pos_x<arena(1)) )=arena(1);
         pos_y( find(pos_y>arena(4)) )=arena(4); 
         pos_y( find(pos_y<arena(3)) )=arena(3); 
         
-        Pl(n)=( sum(vecnorm([diff(pos_x)' diff(pos_y)'],2,2)) );
+        
         
         x_op=[x_op, pos_x(1:end)];
         y_op=[y_op, pos_y(1:end)];

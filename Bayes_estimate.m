@@ -1,7 +1,5 @@
 function posterior= Bayes_estimate(poss_actions,r,prior)
     
-L=[];
-
     if(r==0)
         L=(1-poss_actions);
     
@@ -13,6 +11,6 @@ L=[];
     
 
 
-posterior=L.*prior;
+posterior=(L).*(prior);
 
 end
