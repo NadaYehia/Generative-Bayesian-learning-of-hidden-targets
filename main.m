@@ -76,31 +76,47 @@ for agent=1:ags
     target_hit=[]; 
     hit_time = ones(1, dd  ); 
     anchors_no= zeros(1,dd);
-    prior=prior_flat;
     r_anchors_struct={};
     theta_anchors_struct={};
     
+    % initialize the prior with a flat one.
+    prior=prior_flat;
+
     % training trials:
     for k=1:dd
     
+        % for the first trial, select N (initial anchors) at random from
+        % the flat prior.
          if(k==1) 
-    
+           % set the Nans to 0 before sampling the initial anchors
            temp_prior=prior;
            temp_prior(isnan(temp_prior(:)))=0;
            action_array=1:size(prior,1)*size(prior,2);
            [l_ind]=datasample(action_array,initial_ancs,'Replace',false,'Weights',temp_prior(:) );
+           
+           % find the row, column indices of the sampled anchors.
            [theta_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
            r_anchors=Rs(r_temp_ind);
            theta_anchors=Ths(theta_temp_ind);
-           
-           % planning a trajectory through the first set of anchors using trajectory planner and TSP 
-           % to order these anchors:
+
+           %% Fi- Trajectory planning block:
+           % find the directed graph between the N anchors using travelling
+           % salesman problem (TSP) algorithm, append the home anchors R and
+           % theta at the start of the r_anchors and theta_anchors vectors.
+
            [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[0  theta_anchors]',initial_ancs+1,Rs,Ths);
+
+           % reorder the sampled anchors list using the TSP graph solution.
            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
+
+           % plan out (N-1) segments connecting every consecutive pairs of
+           % anchors in the (N) anchors ordered list, and calculate the (r,theta)
+           % mappings of every point on these segments.
            [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+           
            anchors_no(k)=initial_ancs;
     
-           % keep track of mean heading and speeds
+           % keep track of mean heading and speeds for plotting
            midT=round(numel(rs_)/2);
            om_main(k)=(thetas_(midT));
            r_loop(k)=(rs_(midT));
@@ -108,7 +124,7 @@ for agent=1:ags
            theta_anchors_struct{k}=(theta_anchors);
     
          else
-            % keep track of mean heading and speeds
+            % keep track of mean heading and speeds for plotting
             midT=round(numel(rs_)/2);
             om_main(k)=(thetas_(midT));
             r_loop(k)=(rs_(midT));   
@@ -117,17 +133,17 @@ for agent=1:ags
     
          end
     
-        % 1- simulate the run and observe outcome
+        %% A- simulate the run and observe outcome
         target_num= min(find(k<=cumsum(env.blocks)));  
         [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
         
-        % 2- compute the likelihood of the target being at any point (R,Theta)
+        %% B- compute the likelihood of the target being at any point (R,Theta)
         % given the trajectory and its observed outcome 
         L1=Likelihood(rs_,thetas_,sigma_ridge,Rs,Ths);
         L1=L1.*arena_home_mask;
         L1= 0+ ((L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) ))*1;
         
-        % 3- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
+        %% C- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
         [reset,surpW,surpF]=surprise(L1,target_hit(k),prior,working_mem_surprise,arena_home_mask);
         surprise_flat(k)=surpF;
         surprise_working(k)=surpW;
@@ -135,8 +151,7 @@ for agent=1:ags
     
        if(~reset)
            
-             
-            % 4- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
+            %% D- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
             [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
             
             % add a small value to the posterior to avoid its entries going to 0 from 
@@ -145,12 +160,11 @@ for agent=1:ags
             posterior = posterior+epsilon;
             posterior = posterior ./ nansum(posterior(:));  % Renormalize
             
-            % 5- sampler function for the next actions calling either: proportional or peak sampler
+            %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
             r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
             
-            % 6- the generative model connecting a smooth trajectory through the
-            % anchors samples.
+            %% F- Trajectory planning (same as the module in Fi above).
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
@@ -164,16 +178,16 @@ for agent=1:ags
             prior=posterior;
            
        else
-            % 4'- if the current outcome is too surprising, 
+            %if the current outcome is too surprising, 
             % the environment might have changed and the agent reset its' prior to a flat prior. 
             reset_times(k)=1;
             prior=prior_flat;
     
-            % 5'- sampler function for the next actions calling either: proportional or peak sampler
+            %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
             r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
     
-            % 6- the generative model connecting a smooth trajectory through the
+            %% F the generative model connecting a smooth trajectory through the
             % anchors samples.
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
@@ -188,7 +202,6 @@ for agent=1:ags
     
        end
      
-       % draw the arena, current trajectory, next sampled actions
        if(draw_flg==1)
            draw_trial(Ths,Rs,prior,theta_anchors,r_anchors,arena,targets,target_num,pos_x,pos_y);
            clf;
