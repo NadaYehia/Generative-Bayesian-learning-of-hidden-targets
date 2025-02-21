@@ -23,7 +23,6 @@ arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
 arena.y=[arena_size(3) arena_size(3) arena_size(4) arena_size(4)];
 
 env=environment; % object of environment class
-env.intercept="anypt";
 env.blocks=training_blcks; 
 env.targets_centers=targets_xy; 
 env.targets_dimensions= targets_sizes; 
