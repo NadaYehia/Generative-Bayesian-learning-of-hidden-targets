@@ -140,7 +140,13 @@ for agent=1:ags
         %% B- compute the likelihood of the target being at any point (R,Theta)
         % given the trajectory and its observed outcome 
         L1=Likelihood(rs_,thetas_,sigma_ridge,Rs,Ths);
+
+        % mask the computed likelihood with the arena home mask 
+        % to retain the likelihood values only at the valid locations
+        % outside home AND inside arena
         L1=L1.*arena_home_mask;
+        
+        % normalize the likelihood from 0 to 1.
         L1= 0+ ((L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) ))*1;
         
         %% C- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
