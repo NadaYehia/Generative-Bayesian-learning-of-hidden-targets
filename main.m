@@ -14,7 +14,7 @@ training_blcks=[100 100 100 100 100]; %number of trials per target
 
 % Simulation parameters:
 sigma_ridge=0.075; % Likelihood sigma value in the normalized space.
-ags=10;   % number of agents to run
+ags=50;   % number of agents to run
 n=100;    % size of the posterior matrix.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
