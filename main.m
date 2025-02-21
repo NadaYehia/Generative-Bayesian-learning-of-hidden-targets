@@ -145,13 +145,14 @@ for agent=1:ags
         
         %% C- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
         [reset,surpW,surpF]=surprise(L1,target_hit(k),prior,working_mem_surprise,arena_home_mask);
-        surprise_flat(k)=surpF;
-        surprise_working(k)=surpW;
         
+        % store the surprise values for this run for visualization
+        surprise_flat(k)=surpF; % surprise based on the flat prior
+        surprise_working(k)=surpW; % surprise based on the current posterior
     
        if(~reset)
            
-            %% D- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
+            %% D- Baye's update of the control actions space given the Likelihood of the current outcome and the current posterior.
             [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
             
             % add a small value to the posterior to avoid its entries going to 0 from 
