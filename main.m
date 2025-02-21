@@ -48,7 +48,7 @@ roi_size=7;
 
 
 % Visualization flag
-draw_flg=0;
+draw_flg=1;
 
 % Trajectory planner parameters
 w1_L=1; tol_radius=0.01; ka=10;
@@ -65,7 +65,7 @@ delete(gcp('nocreate'))
 parpool(15);
 
 tic
-parfor agent=1:ags
+for agent=1:ags
 
     dd=sum(env.blocks(target_order));
     surprise_flat=zeros(1,dd);
