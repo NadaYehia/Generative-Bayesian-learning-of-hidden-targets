@@ -14,7 +14,7 @@ training_blcks=[100 100 100 100 100]; %number of trials per target
 
 % Simulation parameters:
 sigma_ridge=0.075; % Likelihood sigma value in the normalized space.
-ags=10;   % number of agents to run
+ags=50;   % number of agents to run
 n=100;    % size of the posterior matrix.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -54,14 +54,16 @@ draw_flg=1;
 w1_L=1; tol_radius=0.01; ka=10;
 
 % Surprise threshold
-working_mem_surprise=1.1;
+working_mem_surprise=1;
 reset=0; % a flag to reset current prior to a flat one if the outcome is surprising enough.
 
-
+% Set up the posterior space: P(R,theta)
+[prior_flat,theta_bounds,r_bounds,r_after_home,arena_home_mask] = setup_posterior_space(Rs,Ths,env,radius_around_home);
 
 % SIMULATION starts
 delete(gcp('nocreate'))
 parpool(15);
+
 tic
 for agent=1:ags
 
@@ -74,31 +76,45 @@ for agent=1:ags
     target_hit=[]; 
     hit_time = ones(1, dd  ); 
     anchors_no= zeros(1,dd);
-    prior=prior_flat;
     r_anchors_struct={};
     theta_anchors_struct={};
     
+    % initialize the prior with a flat one.
+    prior=prior_flat;
+
     % training trials:
     for k=1:dd
     
+        % for the first trial, select N (initial anchors) at random from
+        % the flat prior.
          if(k==1) 
-    
+           % set the Nans to 0 before sampling the initial anchors
            temp_prior=prior;
            temp_prior(isnan(temp_prior(:)))=0;
            action_array=1:size(prior,1)*size(prior,2);
            [l_ind]=datasample(action_array,initial_ancs,'Replace',false,'Weights',temp_prior(:) );
+           
+           % find the row, column indices of the sampled anchors.
            [theta_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
            r_anchors=Rs(r_temp_ind);
            theta_anchors=Ths(theta_temp_ind);
            
-           % planning a trajectory through the first set of anchors using trajectory planner and TSP 
-           % to order these anchors:
+           % find the directed graph between the N anchors using travelling
+           % salesman problem (TSP) algorithm, append the home anchors R and
+           % theta at the start of the r_anchors and theta_anchors vectors.
+
            [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[0  theta_anchors]',initial_ancs+1,Rs,Ths);
+
+           % reorder the sampled anchors list using the TSP graph solution.
            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
+
+           % plan out (N-1) segments connecting every consecutive pairs of
+           % anchors in the (N) aordered list, and calculate the (r,theta)
+           % mappings of every point on these segments.
            [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
            anchors_no(k)=initial_ancs;
     
-           % keep track of mean heading and speeds
+           % keep track of mean heading and speeds for plotting
            midT=round(numel(rs_)/2);
            om_main(k)=(thetas_(midT));
            r_loop(k)=(rs_(midT));
@@ -106,7 +122,7 @@ for agent=1:ags
            theta_anchors_struct{k}=(theta_anchors);
     
          else
-            % keep track of mean heading and speeds
+            % keep track of mean heading and speeds for plotting
             midT=round(numel(rs_)/2);
             om_main(k)=(thetas_(midT));
             r_loop(k)=(rs_(midT));   
