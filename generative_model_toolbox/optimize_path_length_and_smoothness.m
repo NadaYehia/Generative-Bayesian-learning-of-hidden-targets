@@ -22,9 +22,9 @@ p0=[k_d0,r_i, theta_i];
 
 %% lower bounds on parameters:
 
-% lower bound on the first heading vector offset: home anchor to first-( pi-(theta(2)) )
+% lower bound on the first heading vector offset: home anchor to first
 % anchor
-lb(1)=0;
+lb(1)=-( pi-(theta(2)) );
 
 % lower bound for any anchor angle=0, home anchors radii=0, and radius of all anchors
 % 2nd to the second last is =r_home.
@@ -37,8 +37,8 @@ lb(2+no_anchors:end)=zeros(1,no_anchors);
 %% upper bounds on parameters:
 
 % upper bound on the first heading vector offset: home anchor to first
-% anchortheta(2)
-ub(1)=pi; 
+% anchor
+ub(1)=theta(2); 
 
 % upper bounds for any anchor angle and radius is R and pi respec.
 ub(2:2+(no_anchors-1))=repmat(rg_r,1,no_anchors);

@@ -26,9 +26,9 @@ for n=2:numel(r0)
 end
 
 if(rand(1)>0.5)
-    kd(1)=0.2;
+    kd(1)=heading_offsets(1)-eps;
 else
-    kd(1)=pi-0.2;
+    kd(1)=(-(pi-heading_offsets(1)))+eps;
 end
 
 % Optimize [anchor distance, anchor heading, initial heading angle:
