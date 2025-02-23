@@ -42,8 +42,6 @@ radii_noise_offset=c(2);
 radii_noise_slope=c(1);
 % angular_noise=pi*(1/180);
 angular_noise=0; % no hd angle noise,2.189684343307297
-min_local_diff=1e-6;
-pr_thresh=0.01;
 roi_size=7;
 
 
@@ -169,7 +167,7 @@ for agent=1:ags
             
             %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
             
             %% F- Trajectory planning (same as the module in Fi above).
             if(anchors_no(k+1)>1)
@@ -192,7 +190,7 @@ for agent=1:ags
     
             %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
     
             %% F the generative model connecting a smooth trajectory through the
             % anchors samples.
