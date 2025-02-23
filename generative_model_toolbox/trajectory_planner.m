@@ -1,81 +1,77 @@
-function [r,theta,x_op,y_op,exitflag]=trajectory_planner(r_anchors,theta_anchors,env,Os,Rs,...
-ka,w1,tol_radius,r_home)
-
+function [r,theta,x_op,y_op,exitflag]=trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,...
+rho,tol_radius,r_home)
 
 % Initalizations:
 dt=0.01; % time discretization for simulating a path between 2 anchors.
-arena=env.arena_dimensions;
-rg_r=abs(Rs(end)-Rs(1));
-rg_th=abs(Os(end)-Os(1));
-eps=1e-2;
-trials_to_optimize=0;
+arena=env.arena_dimensions; % Dimensions of the arena.
+rg_r=abs(Rs(end)-Rs(1)); % Range of radial distances.
+rg_th=abs(Ths(end)-Ths(1)); % Range of angles.
+eps=1e-2; % Small epsilon value to avoid numerical issues with
+          % thetas or phi0_0 reaching the upper and lower bounds in the 
+          % optimization problem.
 
-theta0=theta_anchors+(pi/2);
-r0=r_anchors;
-r0(r0==0)=eps;
-theta0(theta0==pi)=pi-(eps);
-theta0(theta0==0)=0+(eps);
+trials_to_optimize=0; % Counter for optimization trials.
 
-% angles of the (n-1) vectors connecting 
-% every anchor pair in{n anchors}:
+% Initial conditions for radius and angle:
+theta0=theta_anchors+(pi/2); % Adjust initial angles by 90 degrees.
+r0=r_anchors; % Initial radial distances.
+r0(r0==0)=eps; % Replace zero radii with epsilon to avoid starting the optimization problem
+               % with the radii values at their lower boundary in the optimization problem.
+theta0(theta0==pi)=pi-(eps); % Adjust angles close to pi.
+theta0(theta0==0)=0+(eps);   % Adjust angles close to zero.
+
+% Calculate the heading vectors between consecutive anchor points:
 for n=2:numel(r0)
 
-    heading_offsets(n-1)= theta0(n-1)+atan2( r0(n)*sin(theta0(n)-theta0(n-1)),...
+    heading_vectors(n-1)= theta0(n-1)+atan2( r0(n)*sin(theta0(n)-theta0(n-1)),...
                                     r0(n)*cos(theta0(n)-theta0(n-1)) -r0(n-1)  );
     
 end
 
+% initialize phi0_0 (randomly in clockwise or anti-clockwise direction
+% off the first heading vector:
 if(rand(1)>0.5)
-    kd(1)=heading_offsets(1)-eps;
+    phi0_0=heading_vectors(1)-eps;
 else
-    kd(1)=(-(pi-heading_offsets(1)))+eps;
+    phi0_0=(-(pi-heading_vectors(1)))+eps;
 end
 
-% Optimize [anchor distance, anchor heading, initial heading angle:
-% r,theta,kd] for every anchor to minimize total path length and sum (angul-
-% ar changes at anchor points)
-
+%%
+% Optimization settings:
 MFE=10000;
 Itrs=1000;
 opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,'Display','notify',...
-    'Algorithm','interior-point');
-    
-ri=r0;
-thetai=theta0;
+    'Algorithm','interior-point'); % Optimization options.
 
+% Optimize the path length and smoothness:
 [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
-    optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w1,tol_radius,rg_r,rg_th,opts,dt,r_home);
-  
+    optimize_path_length(r0,theta0,phi0_0,arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home);
+
+% Retry optimization if it fails (up to 2 trials):
 while (exitflag<=0 && (trials_to_optimize<2))
        
         [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
-         optimize_path_length_and_smoothness(ri,thetai,kd,arena,ka,w1,tol_radius,rg_r,rg_th,opts,dt,r_home);
+         optimize_path_length(r0,theta0,phi0_0,arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home);
 
         trials_to_optimize=trials_to_optimize+1;
 end
 
-
-if (~isstruct(output))
-    output
-end 
-
+% Use the best feasible solution if available:
 optimal_para=output.bestfeasible.x;
-[~]=optimizer_obj.my_loss(optimal_para,arena,ka,numel(r0),w1,dt);
+[~]=optimizer_obj.my_loss(optimal_para,arena,rho,numel(r0),dt);
 
-
-
-if(exitflag==-2 && isempty(output.bestfeasible)) %% the solution is infeasible and 
-                                                  % there is no feasible solution from the optimizer
-                                                  % trials  
-        error('infeasbility')
+% Handle infeasible solutions:
+if(exitflag==-2 && isempty(output.bestfeasible)) %  If the solution is infeasible 
+                                                 % and no feasible solution was found.
+        error('infeasbility') % Throw an error.
 end
 
-
+% Extract optimized path coordinates:
 x_op=optimizer_obj.optimized_x;
 y_op=optimizer_obj.optimized_y;
 
 
-% Compute {r,omegas} from the optimized path {x,y} points
+ % Convert optimized path coordinates to polar coordinates:
  [r,theta]= convert_xy_r_angle(x_op,y_op);
   
 
