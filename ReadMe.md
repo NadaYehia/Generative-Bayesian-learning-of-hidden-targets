@@ -77,7 +77,7 @@ main.m
  of a given location being the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
  
 <video width="320" height="240" controls>
-  <source src="2025-02-24-11-28-04.avi" type="video/mp4">
+  <source src="2025-02-24-11-28-04.avi" type="video/avi">
 </video>
 
 2- 
