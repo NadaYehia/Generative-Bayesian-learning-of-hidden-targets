@@ -59,19 +59,15 @@ This module ensures that the agent's movements are efficient and natural.
 Clone the repository:
 
 ```console
-bash
-Copy
 git clone <repository-url>
+```
 Navigate to the repository directory:
-```
 ```console
-bash
-Copy
 cd <repository-directory>
-Run the main script in MATLAB:
 ```
+Run the main script in MATLAB:
 ```console
-main
+main.m
 ```
 
 ## Dependencies
