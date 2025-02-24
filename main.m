@@ -42,8 +42,6 @@ radii_noise_offset=c(2);
 radii_noise_slope=c(1);
 % angular_noise=pi*(1/180);
 angular_noise=0; % no hd angle noise,2.189684343307297
-min_local_diff=1e-6;
-pr_thresh=0.01;
 roi_size=7;
 
 
@@ -51,7 +49,7 @@ roi_size=7;
 draw_flg=1;
 
 % Trajectory planner parameters
-w1_L=1; tol_radius=0.01; ka=10;
+tol_radius=0.01; rho=10; dt=0.01; % time discretization for simulating a path between 2 anchors.
 
 % Surprise threshold
 working_mem_surprise=1;
@@ -112,7 +110,7 @@ for agent=1:ags
            % plan out (N-1) segments connecting every consecutive pairs of
            % anchors in the (N) anchors ordered list, and calculate the (r,theta)
            % mappings of every point on these segments.
-           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt);
            
            anchors_no(k)=initial_ancs;
     
@@ -169,17 +167,17 @@ for agent=1:ags
             
             %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
             
             %% F- Trajectory planning (same as the module in Fi above).
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt);
             else
                 r_anchors=[0, r_anchors, 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt);
             end
             
             prior=posterior;
@@ -192,19 +190,19 @@ for agent=1:ags
     
             %% E- sampler function for the next actions calling either: proportional or peak sampler
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,min_local_diff,pr_thresh,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
     
             %% F the generative model connecting a smooth trajectory through the
             % anchors samples.
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt);
                 
             else
                 r_anchors=[0 r_anchors 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,ka,w1_L,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt);
             end
     
        end

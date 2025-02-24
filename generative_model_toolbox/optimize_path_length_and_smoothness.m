@@ -1,6 +1,6 @@
 
-function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length_and_smoothness(r,theta,k_d0,...
-                                                             arena,ka,w1,tol_radius,rg_r,rg_th,opts,dt,r_home)
+function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length(r,theta,k_d0,...
+                                                             arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home)
 
 no_anchors=numel(r);
 
@@ -48,10 +48,10 @@ ub(2)=0;
 %
 optimizer_obj=OptimizerClass( );
 
-[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)optimizer_obj.my_loss(p,arena,ka,no_anchors,w1,dt) ...
+[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)optimizer_obj.my_loss(p,arena,rho,no_anchors,dt) ...
     ,p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th,arena),opts);
 
-[~]=optimizer_obj.my_loss(optimal_para,arena,ka,no_anchors,w1,dt);
+[~]=optimizer_obj.my_loss(optimal_para,arena,rho,no_anchors,dt);
 
 end
 
