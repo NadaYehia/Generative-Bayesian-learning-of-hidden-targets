@@ -44,11 +44,13 @@ r0(r0==0)=eps; % Replace zero radial values with epsilon.
 theta0(theta0==pi)=pi-(eps); % Adjust angular values close to pi.
 theta0(theta0==0)=0+(eps); % Adjust angular values close to 0.
 
-% Randomly initialize the initial heading angle (phi0_0).
+% initialize the initial heading angle offset (phi0_0).
 if(rand(1)>0.5)
-    phi0_0=0.2; % Small positive angle (clockwise direction of rotation)
+    phi0_0=(-(theta0(2)-(pi/2)))+eps; % (clockwise direction of rotation)
+                                      % and offset angle resulting in phi(0)~ 0
 else
-    phi0_0=pi-0.2; % Small negative angle (anti-clockwise direction of rotation).
+    phi0_0=(pi- (theta0(2)-(pi/2)) )-eps; % anticlockwise direction of rotation and offset angle resulting 
+                                          % in phi(0)~ pi
 end
 
 %%

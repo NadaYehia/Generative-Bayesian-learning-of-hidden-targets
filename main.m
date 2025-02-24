@@ -1,7 +1,7 @@
 
 clear; clc; close all
 
-% Target locations and sizes
+%% Target locations and sizes
 targets_xy=[0 380;-250 290; 250 290;-152 335;152 335; ];  
 targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  % target sizes in w&h
 target_order=[1 2 3 4 5];
@@ -9,12 +9,12 @@ target_order=[1 2 3 4 5];
 arena_size=[-375 375 0 750 ]; %arena coordinates [x1 x2 y1 y2]
 training_blcks=[100 100 100 100 100]; %number of trials per target
 
-% Setup the environment details
+%% Setup the environment details
 [arena,env,targets]=setup_environment(arena_size,targets_xy,targets_sizes,training_blcks);
 
-% Simulation parameters:
+%% Simulation parameters:
 sigma_ridge=0.075; % Likelihood sigma value in the normalized space.
-ags=50;   % number of agents to run
+ags=10;   % number of agents to run
 n=100;    % size of the posterior matrix.
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -25,7 +25,7 @@ Ths=linspace(min_angle,max_angle,n);
 initial_ancs=6; % inital anchors to select.
 radius_around_home=50; % distance considered as Home up till this value.
 
-% Sampler parameters: 
+%% Sampler parameters: 
 % sampler type
 % sampler='proportional';  
 sampler='peak_sampler';
@@ -45,17 +45,17 @@ angular_noise=0; % no hd angle noise,2.189684343307297
 roi_size=7;
 
 
-% Visualization flag
+%% Visualization flag
 draw_flg=1;
 
-% Trajectory planner parameters
+%% Trajectory planner parameters
 tol_radius=0.01; rho=10; dt=0.01; % time discretization for simulating a path between 2 anchors.
 
-% Surprise threshold
-working_mem_surprise=1;
+%% Surprise parameters
+working_mem_surprise=1; % surprise threshold
 reset=0; % a flag to reset current prior to a flat one if the outcome is surprising enough.
 
-% Set up the posterior space: P(R,theta)
+%% Set up the posterior space: P(R,theta)
 [prior_flat,theta_bounds,r_bounds,r_after_home,arena_home_mask] = setup_posterior_space(Rs,Ths,env,radius_around_home);
 
 % SIMULATION starts
