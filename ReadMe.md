@@ -81,7 +81,10 @@ main.m
 [![Demo Video Thumbnail](https://img.youtube.com/vi/9O7vQaQbwuo/0.jpg)](https://youtu.be/9O7vQaQbwuo)
 
 
-2- 
+2- A simulation showing how the agent detect the change in its environment and resets its prior to a flat distribution. 
+The agent resets its belief to a flat distribution when its surprise in the current outcome given the current posterior exceeds a given surprise threshold.
+
+
 
 ## Dependencies
 MATLAB (tested on version R2021a or later).
