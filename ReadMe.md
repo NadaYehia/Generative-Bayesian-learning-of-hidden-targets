@@ -1,63 +1,61 @@
 Generative Model for Learning Hidden Rewarded Locations in a Square Arena Using Bayesian Inference
 This repository contains a generative model for learning hidden rewarded locations in a square arena using Bayesian inference. The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards. The code is optimized and parallelized for fast execution.
 
-Overview
+## Overview
 The program starts by running main.m, which orchestrates the simulation and learning process. Below is a detailed breakdown of the key components and their functionalities:
 
-1. Environment Class
+## 1. Environment Class
 The Environment class defines the physical properties of the arena and the target locations. It includes the following attributes:
 
-Arena Size: The dimensions of the square arena.
+- **Arena Size**: The dimensions of the square arena.
 
-Target Locations & Sizes: The coordinates and sizes of the rewarded targets.
+- **Target Locations & Sizes** : The coordinates and sizes of the rewarded targets.
 
-Intercept Mode: The mode of interception used by the agent to receive a reward.
+- **Blocks**: The number of trials per target location.
 
-Blocks: The number of trials per target location.
+ ### Methods
+- get_target_corners: A static method that takes the target centers and dimensions as input and outputs their respective corner coordinates. This is useful for visualization and collision detection.
 
-Methods
-get_target_corners: A static method that takes the target centers and dimensions as input and outputs their respective corner coordinates. This is useful for visualization and collision detection.
+- Future Plans: We plan to extend this class to handle obstacles and their setup in the environment.
 
-Future Plans: We plan to extend this class to handle obstacles and their setup in the environment.
-
-2. Set Control Actions Space
+## 2. Set Control Actions Space
 This module defines the action space for the agent, which consists of possible speeds and angles. The action space is constrained by the physical limits of the arena, ensuring that the agent's movements are realistic and feasible.
 
-3. Simulate Run
+## 3. Simulate Run
 The simulate_run function simulates the agent's movement along a given trajectory and observes the outcome at the home port. It determines whether the agent successfully intercepts the target and receives a reward.
 
-4. Surprise
+## 4. Surprise
 The surprise function detects changes in the environment, such as shifts in target locations. If the observed outcome is too surprising (i.e., it deviates significantly from the agent's expectations), the agent resets its prior belief to a uniform distribution. This allows the agent to adapt to unexpected changes in the environment.
 
-5. Bayes' Update for Action Parameters
+## 5. Bayes' Update for Action Parameters
 This function updates the agent's belief about the rewarding locations using Bayesian inference. It works as follows:
 
-Likelihood Function: The likelihood of the target location is estimated by convolving the executed trajectory (in polar coordinates) with a 2D Gaussian kernel. The sigma parameter of the Gaussian represents the agent's belief about the size of the rewarding location and the consistency of the outcome around the locations it has explored.
+1- Likelihood Function: The likelihood of the target location is estimated by convolving the executed trajectory (in polar coordinates) with a 2D Gaussian kernel. The sigma parameter of the Gaussian represents the agent's belief about the size of the rewarding location and the consistency of the outcome around the locations it has explored.
 
-Posterior Update: The likelihood function is used to update the agent's posterior belief about the rewarding locations. This posterior is then used to guide the agent's future actions.
+2- Posterior Update: The likelihood function is used to update the agent's posterior belief about the rewarding locations. This posterior is then used to guide the agent's future actions.
 
-6. Sampling Next Actions
+## 6. Sampling Next Actions
 The Sampling_next_actions function represents the agent's strategy for selecting the next set of actions after updating its posterior belief. Two sampling algorithms are implemented:
 
-Peak Sampler: Selects actions with the highest local reward probability. This strategy focuses on exploiting the most promising areas.
+1- Peak Sampler: Selects actions with the highest local reward probability. This strategy focuses on exploiting the most promising areas.
 
-Proportional Sampler: Selects actions proportional to their reward probability in the posterior. This strategy balances exploration and exploitation.
+2- Proportional Sampler: Selects actions proportional to their reward probability in the posterior. This strategy balances exploration and exploitation.
 
 These two algorithms represent extremes of a continuum, allowing the agent to adapt its sampling strategy based on the task requirements.
 
-7. Trajectory Planner
+## 7. Trajectory Planner
 The Trajectory_planner function is the core of the agent's generative model. It takes a list of anchors (sampled by the Sampling_next_actions function) as input and optimizes the path between them. The optimization process minimizes the path length and ensures smoothness.
 
-Key Steps:
-Anchor Optimization: The function computes the optimal heading and distances for the set of anchors.
+**Key Steps**:
+1- Anchor Optimization: The function computes the optimal heading and distances for the set of anchors.
 
-Path Generation: It generates a smooth trajectory connecting the optimized anchors.
+2- Path Generation: It generates a smooth trajectory connecting the optimized anchors.
 
-Coordinate Transformation: The function samples {x, y} points along the path and calculates their polar coordinates {r, theta}.
+3- Coordinate Transformation: The function samples {x, y} points along the path and calculates their polar coordinates {r, theta}.
 
 This module ensures that the agent's movements are efficient and natural.
 
-How to Run the Code
+## How to Run the Code
 Clone the repository:
 
 bash
