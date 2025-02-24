@@ -46,7 +46,7 @@ These two algorithms represent extremes of a continuum, allowing the agent to ad
 ## 7. Trajectory Planner
 The Trajectory_planner function is the core of the agent's generative model. It takes a list of anchors (sampled by the Sampling_next_actions function) as input and optimizes the path between them. The optimization process minimizes the path length and ensures smoothness.
 
-**Key Steps**:
+**Key Steps**:\
 1- Anchor Optimization: The function computes the optimal heading and distances for the set of anchors.
 
 2- Path Generation: It generates a smooth trajectory connecting the optimized anchors.
@@ -58,37 +58,38 @@ This module ensures that the agent's movements are efficient and natural.
 ## How to Run the Code
 Clone the repository:
 
+```console
 bash
 Copy
 git clone <repository-url>
 Navigate to the repository directory:
-
+```
+```console
 bash
 Copy
 cd <repository-directory>
 Run the main script in MATLAB:
-
-matlab
-Copy
+```
+```console
 main
-Dependencies
+```
+
+## Dependencies
 MATLAB (tested on version R2021a or later).
 
 Parallel Computing Toolbox (for optimized and parallelized execution).
 
-Future Work
-Obstacle Handling: Extend the Environment class to include obstacles and their setup.
+## Future Work
+- Obstacle Handling: Extend the Environment class to include obstacles and their setup.
 
-Advanced Sampling Strategies: Implement additional sampling algorithms to further improve the agent's exploration and exploitation capabilities.
+- Advanced Sampling Strategies: Implement additional sampling algorithms to further improve the agent's exploration and exploitation capabilities.
 
-Visualization Tools: Add more visualization options to better understand the agent's learning process and trajectory optimization.
+- Visualization Tools: Add more visualization options to better understand the agent's learning process and trajectory optimization.
 
-Contributing
+## Contributing
 We welcome contributions to this project! If you have suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
 
-License
+## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 This README provides a comprehensive overview of the project, its components, and how to use it. Let me know if you need further refinements or additional sections!
-
-New chat
