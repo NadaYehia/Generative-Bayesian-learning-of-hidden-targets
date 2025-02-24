@@ -72,9 +72,9 @@ main.m
 
 ## Demo
  
- 1- A simulation of the model learning a target. Left window shows the executed trajectories and right window shows the posterior 
- updated given the executed trajectory and the outcome (reward/ target hit OR no reward/ target missed). The color hue represents the probability 
- of a given location being the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
+ 1- A simulation of the model learning a target. Left window shows the executed trajectories and right window shows the agent's posterior belief about target locations
+  given the executed trajectory and its outcome (reward/ target hit OR no reward/ target missed). The colormap hue represents the updated belief 
+ that a given location is the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
 
 [comment]: <> (<video src="https://raw.githubusercontent.com/NadaYehia/Generative-Bayesian-learning-of-hidden-target/main/Demo/V1.mp4" controls width="640"></video>)
 
