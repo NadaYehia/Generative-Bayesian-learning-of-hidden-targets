@@ -82,8 +82,9 @@ main.m
 
 
 2- A simulation showing how the agent detect the change in its environment and resets its prior to a flat distribution. 
-The agent resets its belief to a flat distribution when its surprise in the current outcome given the current posterior exceeds a given surprise threshold.
+The agent learnt target 1 pretty well and localized the control parameters that intercepts it, however it will reset its belief to a flat distribution when its surprise in the current outcome given the current posterior exceeds a given surprise threshold which coincides with the expreiment target switching to target number 2 (farthest left target). This reset enables the agent to learn new targets fast and maximize its long term rewards.
 
+[![Demo Video Thumbnail](https://img.youtube.com/vi/raxOUuS0T1o/0.jpg)](https://youtu.be/raxOUuS0T1o)
 
 
 ## Dependencies
