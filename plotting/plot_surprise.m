@@ -18,4 +18,4 @@ std_surprise=std(surprise_flat_agent(:,1:trials));
 
 
 
-hold on, shadedErrorBar_std_mean(1:trials, mean(surprise_flat_agent(:,1:trials),1) ,std_surprise,{'color',[0.6 0.5 0.5]}); hold on;
+% hold on, shadedErrorBar_std_mean(1:trials, mean(surprise_flat_agent(:,1:trials),1) ,std_surprise,{'color',[0.6 0.5 0.5]}); hold on;

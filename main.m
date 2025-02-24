@@ -1,302 +1,358 @@
+% Clear the workspace, command window, and close all figures to start fresh.
+clear; clc; close all
 
-clear all
-clc
-close all
+%% Target locations and sizes
+% Define the (x, y) coordinates of the target locations.
+targets_xy=[0 380;-250 290; 250 290;-152 335;152 335; ];  
 
-% setup the environment: the arena size, number of targets,target
-% locations, target sizes
+% Define the width and height of each target.
+targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  
 
-targets_xy=[-250 290;10 380; 295 290;-120 335;152 335; ]; % from the mouse data 
-targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  % target sizes in x&y: nx2
+% Define the order in which targets will be visited.
+target_order=[1 2 3 4 5];
+
+% Define the arena boundaries as [x_min, x_max, y_min, y_max] centered about Home location (x,y).
 arena_size=[-375 375 0 750 ];
-arena.x=[arena_size(1) arena_size(2) arena_size(2) arena_size(1)];
-arena.y=[arena_size(3) arena_size(3) arena_size(4) arena_size(4)];
-env=environment;
-env.intercept="anypt";
-env.blocks=[100 100 100 100 100]; % number of trials per target: 1xn
-env.targets_centers=targets_xy; 
-env.targets_dimensions= targets_sizes; 
-env.arena_dimensions= arena_size;  % arena size 1x4
-targets=env.setup_targets_coord; % outputs nx2 struct: each row is a target
-                                 % col1 are the x coords and col2 are the 
-                                 % ycoords of the target corners
 
-sigma_ridge=7.5; %uncertainity in the value of the action parameters executed.
-leak_sigma=[1 1]; % leak in the posterior
+% Define the number of training trials per target.
+training_blcks=[100 100 100 100 100]; 
 
-ags=50;   %number of agents to run
-n=100;    %number of samples in speed space and angle space.
+%% Setup the environment details
+
+% Call the `setup_environment` function to initialize the arena, environment, and targets.
+[arena,env,targets]=setup_environment(arena_size,targets_xy,targets_sizes,training_blcks);
+
+%% Simulation parameters:
+sigma_ridge=0.075; % Likelihood sigma value in the normalized space.
+ags=50;   % number of agents to run
+n=100;    % size of the posterior matrix (resolution for action space discretization).
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
 max_angle=pi/2;  %maximum angle in the action space (relative to the vertical axis) 
 min_angle=-pi/2;   %minimum angle in the action space (relative to the vertical axis)
-speed_step=round((max_speed-min_speed)/n);
-angle_step=((max_angle-min_angle)/n);
+Rs=linspace(min_speed,max_speed,n); % Create a linearly spaced vector of speed values (radial distances).
+Ths=linspace(min_angle,max_angle,n); % Create a linearly spaced vector of angle values.
+initial_ancs=6; % inital anchors to select.
+radius_around_home=50; % maximum distance considered as the Home area.
 
-Rs=linspace(min_speed,max_speed,n);
-Ths=linspace(min_angle,max_angle,n);
-
-clearnce=0.2; %loop width in radians 
-
-% sampler='proportional';
+%% Sampler parameters: 
+% % Define the type of sampler to use for selecting actions (e.g., 'peak_sampler').
+% sampler='proportional';  
 sampler='peak_sampler';
 
-% execution noise
-% c=[0.033899299095407 ...
-%     12.544571007553474]; % minimum noise in the R estimate fitted to all targets 
-                           % on mouse 3                                 
-c=[0 0]; %no R noise
-bestFitDataOffset=c(2);
-bestFitMeanToScaleRatio=c(1);
-
-% bestNormalFitAngleScale=pi*(2.189684343307297/180); % minimum noise in the Theta estimate fitted to
-                                                      % all targets of mouse 3
-bestNormalFitAngleScale=0; % no hd angle noise
-
-ka=0.01;
-draw_flg=0;
-
-% planner optimizer parameters
-min_tol=0.01;
-w2_L=1e5;
-tol_radius=0.05; % +/-30mm
-a_entropy=1; %1mm tighter or wider for 1unit change in entropy
-target_order=[1 2];
+% Scaling factor for the merging criterion.
 kmerge=1;
-merging_criterion= (kmerge*sigma_ridge)/n; % converting sigma ridge from pixels distance to normalized dist.
-percentile_peak_sampler=0;
-min_radius_around_home=50;
-% relative_surprise= 14;
-working_mem_surprise=4.7;
-cache_flag=0;
-spc=100000;
 
-[prior_global,theta_bounds,r_bounds]= set_control_actions_space(Rs,Ths,env.arena_dimensions,spc);
-prior_global=boolean(prior_global);
-%home radius to exclude
-[prior_exc_home,~,c_home]=semi_circle_around_home(prior_global,min_radius_around_home,Rs,Ths);
-%home radius to exclude
+% Distance threshold for merging two anchors in the proportional sampler
+merging_criterion= (kmerge*sigma_ridge);  
 
-prior_global=prior_global&prior_exc_home;
-arena_home_mask=prior_global;
-naned_arena_home_mask=1-arena_home_mask;
-naned_arena_home_mask(find(naned_arena_home_mask))=nan;
-arena_home_mask=arena_home_mask+naned_arena_home_mask;
-prior_global=arena_home_mask./(nansum(arena_home_mask(:)));
+% Define noise parameters for radial distances and angles (set to zero for no noise).
+% . 0.033899299095407 ...
+    %12.544571007553474
+% c=[0.01 8];    
+
+c=[0 0]; %no R noise
+
+% Offset for radial noise.
+radii_noise_offset=c(2);
+
+% Slope for radial noise.
+radii_noise_slope=c(1);
+
+% angular_noise=pi*(1/180);
+
+% Define angular noise (set to zero for no noise).
+angular_noise=0; %2.189684343307297
+
+% size of local neighborhood for peaks filtration.
+roi_size=7; 
+
+%% Visualization parameters
+
+draw_flg=1; % Flag to enable or disable visualization (1 = enable, 0 = disable).
+
+%% Trajectory planner parameters
+
+% Tolerance for radial deviations in the trajectory planner.
+tol_radius=0.01;
+
+% scaling factor of the timing function of distance.
+rho=10; 
+
+% Time step for trajectory evaluation.
+dt=0.01;
+
+% Small epsilon value to avoid numerical issues with
+% thetas or phi0_0 reaching the upper and lower bounds in the 
+% optimization problem.
+eps=1e-2; 
+
+% Maximum number of optimization trials if the initial attempt fails.
+max_opti_trials=2; 
+
+%% Surprise parameters
+
+% Threshold for detecting surprising outcomes (used for resetting the prior).
+working_mem_surprise=1; 
+
+% Flag to reset the current prior to a flat one if the outcome is surprising enough.
+reset=0; 
+
+%% Set up the posterior space: P(R,theta)
+
+% Call the `setup_posterior_space` function to initialize the posterior space.
+[prior_flat,theta_bounds,r_bounds,r_after_home,arena_home_mask] = setup_posterior_space(Rs,Ths,env,radius_around_home);
+
 
 %% SIMULATION starts
 
+% Delete any existing parallel pool to avoid conflicts.
+delete(gcp('nocreate'))
+% Start a new parallel pool with 15 workers for parallel processing.
+parpool(15);
+
+% Start simulation timer
 tic
-parfor agent=1:ags
 
-t_lst_caching=1;
-initial_ancs=10;
-dd=sum(env.blocks(target_order));
-surprise_flat=zeros(1,dd);
-surprise_working=zeros(1,dd);
-caching_times_agent=zeros(1,dd);
-mass_out_tent=zeros(1,dd);
-mass_outside_home=zeros(1,dd);
-posteriors_support_per_agent=zeros(1,dd);
-r_loop=zeros(1, dd );
-om_main=zeros(1, dd );      
-target_hit=[]; 
-hit_time = ones(1, dd  ); 
-anchors_no= zeros(1,dd);
+% Simulate training on all targets for K agents.
+for agent=1:ags
 
-prior=prior_global;
-cched_memories=1;
-I_initial=my_entropy(prior);
-constantt=log(tol_radius)-(a_entropy*I_initial);
+    %% Initialize vectors to store results and metrics.
 
-r_anchors_struct={};
-theta_anchors_struct={};
+    % Total number of trials based on the target order and training blocks.
+    dd=sum(env.blocks(target_order));
 
-anchors_no_variance={};
-posterior_support_r_var=zeros(1,dd);
-posterior_support_omega_var=zeros(1,dd); 
-posterior_support_mu_entropy=zeros(1,dd);
-posterior_support_omega_entropy=zeros(1,dd);
-tol_vec=zeros(1,dd);
-Ivec=zeros(1,dd);
+    % Array to store surprise values relative to the flat prior.
+    surprise_flat=zeros(1,dd);
 
-%% starting the simulation for a model mouse
+    % Array to store surprise values relative to the current posterior.
+    surprise_working=zeros(1,dd);
 
-for k=1:dd
+    % Array to store times when the prior is reset due to surprising outcomes.
+    reset_times=zeros(1,dd);
 
-     if(k==1) 
+    % Array to store the mean speed (radius) for each trial.
+    r_loop=zeros(1, dd );
 
-       l_ind=[];
-       ancs=initial_ancs;
-       temp_prior=prior;
-       temp_prior(isnan(temp_prior(:)))=0;
-       action_array=[1:size(prior,1)*size(prior,2)];
-       [l_ind]=datasample(action_array,ancs,'Replace',false,'Weights',temp_prior(:) );
-       [theta_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
-       r_anchors=Rs(r_temp_ind);
-       theta_anchors=Ths(theta_temp_ind);
-              
-       Ivec(k)=my_entropy(prior);   
-       tol_vec(k)=tol_radius;
-       
-       [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[0  theta_anchors]',initial_ancs+1,Rs,Ths);
-       [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-       [rs_,thetas_,pos_x,pos_y,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_vec(k),Rs(min(c_home)));
-       anchors_no(k)=initial_ancs;
+    % Array to store the mean heading (angle) for each trial.
+    om_main=zeros(1, dd );   
 
-       % keep track of mean heading and speeds
-       midT=round(numel(rs_)/2);
-       om_main(k)=(thetas_(midT));
-       r_loop(k)=(rs_(midT));
-       r_anchors_struct{k}=(r_anchors);
-       theta_anchors_struct{k}=(theta_anchors);
+   % Array to store information about target hits (initially empty).
+    target_hit=[]; 
 
-     else
-        % keep track of mean heading and speeds
-        midT=round(numel(rs_)/2);
-        om_main(k)=(thetas_(midT));
-        r_loop(k)=(rs_(midT));   
-        r_anchors_struct{k}=(r_anchors);
-        theta_anchors_struct{k}=(theta_anchors);
+    % Array to store the time stamps where the agent hit the target in each trial.
+    hit_time = ones(1, dd  ); 
 
-     end
+    % Array to store the number of anchors used in each trial.
+    anchors_no= zeros(1,dd);
 
-    % 1- simulate the run and observe outcome
-    target_num= min(find(k<=cumsum(env.blocks)));  
-    [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
+    % Cell array to store the radial distances of anchors for each trial.
+    r_anchors_struct={};
+
+    % Cell array to store the angles of anchors for each trial.
+    theta_anchors_struct={};
+
     
-    % 2- compute the likelihood of the target being at any point (R,Theta)
-    % given the trajectory and its observed outcome 
-    L1=Likelihood(rs_,thetas_,sigma_ridge,Rs,Ths);
-    L1=L1.*arena_home_mask;
-    L1= (L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) );
+    % Initialize the prior with a flat prior (uniform distribution):
+    prior=prior_flat;
+
+    %% Training trials loops:
+    for k=1:dd
     
-    % 3- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
-    [cache_flag,surpW,surpF]=surprise(L1,target_hit(k),prior,working_mem_surprise,arena_home_mask);
-    surprise_flat(k)=surpF;
-    surprise_working(k)=surpW;
-  
-   %disable caching by setting the flag always to 0
-%        cache_flag=0;
+        % For the first trial, select N (initial anchors) at random from
+        % the flat prior.
+         if(k==1) 
+             
+           % Set NaN values in the prior to 0 before sampling:
+           temp_prior=prior;
+           temp_prior(isnan(temp_prior(:)))=0;
 
-   if(~cache_flag)
-       
-         
-        % 4- Baye's update of the control actions space given the outcome of a trajectory: reward=0/1
-        [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
+           % Create an array of indices for all possible actions:
+           action_array=1:size(prior,1)*size(prior,2);
 
-        % leak in the posterior certanity every time step; implemented
-        % via a 2D gaussian blur
-        %          new_posterior=myconv2(posterior,leak_sigma);
-        %          posterior=new_posterior;
-        
-        % compute entropy and reduce tolerance radius
-%         I=my_entropy(posterior);
-%         Ivec(k+1)=I;
-%         tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(min_tol);
-        
-        % 5- sampler function for the next actions calling either: proportional or peak sampler
-        [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
-        Rs(min(c_home)),percentile_peak_sampler,...
-        bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale);
-        
-        % 6- the generative model connecting a smooth trajectory through the
-        % anchors samples.
-        if(anchors_no(k+1)>1)
-            [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
-            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
-        else
-            r_anchors=[0, r_anchors, 0];
-            theta_anchors=[0, theta_anchors, 0];
-            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
-        end
-        prior=posterior;
+           % Sample initial anchors using weighted random sampling:
+           [l_ind]=datasample(action_array,initial_ancs,'Replace',false,'Weights',temp_prior(:) );
+           
+           % Convert linear indices to row and column indices for the sampled anchors
+           [theta_temp_ind,r_temp_ind]=ind2sub(size(prior),l_ind);
 
- 
-   else
-        % 4'- if the current outcome is to surprising, 
-        % the environment might have changed and the agent reset its' prior to a flat prior. 
-        
-        caching_times_agent(k)=1;
-        active_prior=prior_global;
+           % Extract the radial distances and angles for the sampled anchors:
+           r_anchors=Rs(r_temp_ind);
+           theta_anchors=Ths(theta_temp_ind);
 
-%         I=my_entropy(active_prior);
-%         Ivec(k+1)=I;
-%         tol_vec(k+1)=exp(a_entropy*Ivec(k+1)+constantt)+(min_tol);
+           %% Fi- Trajectory planning block:
+           
+           % Use the Travelling Salesman Problem (TSP) algorithm to find the optimal order of anchors:
+           [Gsol, ~, ~]=connect_anchors_tsp([ 0 r_anchors]',[0  theta_anchors]',initial_ancs+1,Rs,Ths);
+
+           % Reorder the sampled anchors based on the TSP solution:
+           [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
+
+           % Plan the trajectory between consecutive pairs of anchors:
+           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+           
+           % Store the number of anchors used in this trial:
+           anchors_no(k)=initial_ancs;
+    
+           % Calculate and store the mean heading and speed for plotting:
+           midT=round(numel(rs_)/2);  % Midpoint of the trajectory.
+           om_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
+           r_loop(k)=(rs_(midT));     % Mean speed (radius) at the midpoint.
+
+           % Store the anchors for this trial:
+           r_anchors_struct{k}=(r_anchors); 
+           theta_anchors_struct{k}=(theta_anchors);
+    
+         else
+
+            % For subsequent trials, update the mean heading and speed for plotting:
+            midT=round(numel(rs_)/2); % Midpoint of the trajectory.
+            om_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
+            r_loop(k)=(rs_(midT));     % Mean speed (radius) at the midpoint. 
+
+            % Store the anchors for this trial:
+            r_anchors_struct{k}=(r_anchors);
+            theta_anchors_struct{k}=(theta_anchors);
+    
+         end
+    
+        %% A- simulate the run and observe outcome
+
+        % Determine the target number for the current trial based on the cumulative sum of training blocks.
+        target_num= min(find(k<=cumsum(env.blocks)));  
+
+        % Simulate the run and observe whether the target was hit and the time taken to hit it
+        [target_hit(k),hit_time(k)]=simulate_a_run(pos_x,pos_y,target_num,env,hit_time(k));
         
-        % 5'- sampler function for the next actions calling either: proportional or peak sampler
-        [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(active_prior,sampler,initial_ancs,Rs,Ths,merging_criterion,r_bounds,theta_bounds,...
-        Rs(min(c_home)),percentile_peak_sampler,...
-        bestFitDataOffset,bestFitMeanToScaleRatio,bestNormalFitAngleScale);
-        % 6- the generative model connecting a smooth trajectory through the
-        % anchors samples.
+        %% B- compute the likelihood of the target being at any point (R,Theta)
+        % given the trajectory and its observed outcome 
+
+        % Compute the likelihood of the target location given the trajectory, observation  and `sigma_ridge`.
+        L1=Likelihood(rs_,thetas_,sigma_ridge,Rs,Ths);
+
+        % Mask the computed likelihood with the arena home mask to retain only valid locations:
+        % - Outside the home region.
+        % - Inside the arena boundaries.
+        L1=L1.*arena_home_mask;
         
-        if(anchors_no(k+1)>1)
-            [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
-            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
+        % Normalize the likelihood from 0 to 1 for easier interpretation and comparison.
+        L1= 0+ ((L1-min(L1(:))) ./ ( max(L1(:))- min(L1(:)) ))*1;
+        
+        %% C- compute the relative surprise in the observed outcome under the current posterior versus under a flat prior 
+        % Compute the surprise values:
+        % - `surpF`: Surprise relative to the flat prior.
+        % - `surpW`: Surprise relative to the current posterior.
+        % - `reset`: Flag indicating whether to reset the prior due to high surprise.
+        [reset,surpW,surpF]=surprise(L1,target_hit(k),prior,working_mem_surprise,arena_home_mask);
+        
+        % Store the surprise values for this run for visualization
+        surprise_flat(k)=surpF; % surprise based on the flat prior
+        surprise_working(k)=surpW; % surprise based on the current posterior
+    
+       if(~reset)
+           
+            %% D- Baye's update of the control actions space 
+            % given the likelihood of the current outcome and the current posterior.
+
+            % Update the posterior using Bayes' rule.
+            [posterior]=Bayes_update_for_actions_params(L1,target_hit(k),prior);
             
-        else
-            r_anchors=[0 r_anchors 0];
-            theta_anchors=[0, theta_anchors, 0];
-            [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,clearnce,Ths,Rs,ka,w2_L,tol_radius,Rs(min(c_home)));
-        end
-        prior=active_prior;
+            % Add a small value to the posterior to avoid numerical instability
+            % from repeated multiplications (e.g., probabilities going to 0)
+            epsilon = 1e-16;
+            posterior = posterior+epsilon;
+            posterior = posterior ./ nansum(posterior(:));  % Renormalize the posterior.
+            
+            %% E- sampler function for the next actions 
+            % Call either: proportional or peak sampler to select next
+            % actions.
 
-   end
- 
-   %% draw the arena, current trajectory, next sampled actions
-   if(draw_flg==1)
-       figure(2);
-       h2=imagesc((Ths),Rs,(prior'));
-       set(h2, 'AlphaData', ~isnan(h2.CData))
-       set(gca,'YDir','normal');
-       set(gca,'XDir','reverse');
-       xticks([-pi/2 -pi/3 -pi/4 -pi/8 0 pi/8 pi/4 pi/3 pi/2])
-       xticklabels({'-\pi/2','-\pi/3','-\pi/4','-\pi/8','0','\pi/8','\pi/4','\pi/3','\pi/2'})
-       set(gca,'TickDir','out')
-       hold on, scatter(theta_anchors,r_anchors,30,'r','filled');
-%        hold on, scatter(Os(r_b),Rs(c_b),15,'m');
-       hold off;
-       colorbar;
-       f=figure(1);    
-       f.Position=[100 100 200 200];
-       patch(arena.x,arena.y,[1 1 1]); hold on;
-       patch(targets(target_num).x,targets(target_num).y,[0.85 0.9 0.9]);
-       hold on, plot(pos_x',pos_y','k','LineWidth',1.5);
-       hold on,scatter(pos_x,pos_y,5,[1:numel(pos_y)],'filled');
-       set(gca,'XTick',[]);
-       set(gca,'YTick',[]);
-       
-       clf;
-       
-   end
-  %% draw the arena, current trajectory, next sampled actions
+            % Sample the next set of anchors based on the updated posterior.
+            [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
+            
+            %% F- Trajectory planning (same as the module in Fi above).
+            if(anchors_no(k+1)>1)
+                % If there are multiple anchors, use the TSP algorithm to find the optimal order.
+                [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
+                [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+            else
+                % If there is only one anchor, append home anchors and plan the trajectory.
+                r_anchors=[0, r_anchors, 0];
+                theta_anchors=[0, theta_anchors, 0];
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+            end
+            
+            % Update the prior for the next trial:
+            prior=posterior;
+           
+       else
+            % If the current outcome is too surprising, 
+            % reset the prior to a flat prior. 
 
-  pos_x=[]; pos_y=[];
-  % replace the new vectors with the next trajectory xy points
-  pos_x=pos_xnew;
-  pos_y=pos_ynew;
-  % set current actions to the new ones
-  rs_=rs_new;
-  thetas_=thetas_new;
+            % Mark this trial as a reset event.
+            reset_times(k)=1;
+
+            % Reset the prior to the flat prior.
+            prior=prior_flat;
+    
+            %% E- sampler function for the next actions 
+            % Call either: proportional or peak sampler to select next
+            % actions.
+
+            % Sample the next set of anchors based on the flat prior.
+            [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
+    
+            %% F the generative model connecting a smooth trajectory through the
+            % anchors samples.
+
+            if(anchors_no(k+1)>1)
+                % If there are multiple anchors, use the TSP algorithm to find the optimal order.
+                [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
+                [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+                
+            else
+                % If there is only one anchor, append home anchors and plan the trajectory.
+                r_anchors=[0 r_anchors 0];
+                theta_anchors=[0, theta_anchors, 0];
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+            end
+    
+       end
+     
+       % Visualization:
+       if(draw_flg==1)
+           % Draw the current trial's details (target, trajectory, anchors, etc.).
+           draw_trial(Ths,Rs,prior,theta_anchors,r_anchors,arena,targets,target_num,pos_x,pos_y);
+
+           % Clear the figure for the next trial.
+           clf;
+       end
+    
+     % Update the trajectory and anchors for the next run:
+      pos_x=pos_xnew;  % Update the x-coordinates of the trajectory.
+      pos_y=pos_ynew;  % Update the y-coordinates of the trajectory.
+      rs_=rs_new;      % Update the radial distances of the trajectory.
+      thetas_=thetas_new;  % Update the angles of the trajectory.
+    
+    end
+    
+    % Store loops radii, heading angles and accuracies traces from all training trials 
+    % for every model mouse agent
+    r_pop_avg(agent,:) = r_loop;
+    hd_pop_avg(agent,:)=om_main;
+    corr_pop_avg(agent,:) = target_hit;
+    anchors_no_pop(agent,:)=anchors_no;
+    r_anchors_pop{agent}=r_anchors_struct;
+    om_anchors_pop{agent}=theta_anchors_struct;
+    caching_times(agent,:)=reset_times;
+    surprise_working_agent(agent,:)=surprise_working;
+    surprise_flat_agent(agent,:)=surprise_flat;
 
 end
- 
-r_pop_avg(agent,:) = r_loop;
-hd_pop_avg(agent,:)=om_main;
-corr_pop_avg(agent,:) = target_hit;
-anchors_no_pop(agent,:)=anchors_no;
-r_anchors_pop{agent}=r_anchors_struct;
-om_anchors_pop{agent}=theta_anchors_struct;
-tol_radii(agent,:)=tol_vec;
-I_agents(agent,:)=Ivec;
-caching_times(agent,:)=caching_times_agent;
-posteriors_support(agent,:)=posteriors_support_per_agent;
-surprise_working_agent(agent,:)=surprise_working;
-surprise_flat_agent(agent,:)=surprise_flat;
 
-end
-
+% Stop simulation timer
 toc
