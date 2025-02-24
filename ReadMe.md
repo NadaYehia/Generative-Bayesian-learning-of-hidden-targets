@@ -70,6 +70,18 @@ Run the main script in MATLAB:
 main.m
 ```
 
+## Demo
+ 
+ 1- A simulation of the model learning a target. Left window shows the executed trajectories and right window shows the posterior 
+ updated given the executed trajectory and the outcome (reward/ target hit OR no reward/ target missed). The color hue represents the probability 
+ of a given location being the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
+ 
+<video width="320" height="240" controls>
+  <source src="2025-02-24-11-28-04.avi" type="video/mp4">
+</video>
+
+2- 
+
 ## Dependencies
 MATLAB (tested on version R2021a or later).
 
