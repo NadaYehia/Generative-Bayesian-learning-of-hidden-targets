@@ -78,7 +78,7 @@ main.m
 
 [comment]: <> (<video src="https://raw.githubusercontent.com/NadaYehia/Generative-Bayesian-learning-of-hidden-target/main/Demo/V1.mp4" controls width="640"></video>)
 
-[![Demo Video Thumbnail](https://img.youtube.com/vi/hsvMkcGzdIo/0.jpg)](https://youtu.be/hsvMkcGzdIo)
+[![Demo Video Thumbnail](https://img.youtube.com/vi/9O7vQaQbwuo/0.jpg)](https://youtu.be/9O7vQaQbwuo)
 
 
 2- 
