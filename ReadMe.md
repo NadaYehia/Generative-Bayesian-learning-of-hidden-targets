@@ -76,9 +76,7 @@ main.m
  updated given the executed trajectory and the outcome (reward/ target hit OR no reward/ target missed). The color hue represents the probability 
  of a given location being the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
  
-<video width="320" height="240" controls>
-  <source src="2025-02-24-11-28-04.avi" type="video/avi">
-</video>
+(https://raw.githubusercontent.com/nadayehia/Generative-Bayesian-learning-of-hidden-targets/main/demo/V1.mp4)
 
 2- 
 
