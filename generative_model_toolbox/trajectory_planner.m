@@ -1,15 +1,37 @@
 function [r,theta,x_op,y_op,exitflag]=trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,...
-rho,tol_radius,r_home)
+rho,tol_radius,r_home,dt,eps,max_opti_trials)
+% trajectory_planner - Plans an optimal trajectory through a set of anchor points.
+%                      The trajectory minimizes path length and angular changes while respecting constraints.
+%
+% Inputs:
+%   r_anchors      - Radial coordinates of anchor points.
+%   theta_anchors  - Angular coordinates of anchor points.
+%   env            - Environment structure containing arena dimensions.
+%   Ths            - Vector of possible angular values.
+%   Rs             - Vector of possible radial values.
+%   rho            - scaling factor of the timing function with distance. 
+%   tol_radius     - Tolerance radius for constraints.
+%   r_home         - Minimum allowed radial value (home position).
+%   dt             - Time step for trajectory generation.
+%   eps            -Small epsilon value to avoid numerical issues with
+%                   thetas or phi0_0 starting the optimization at their upper or lower bounds.
+%   max_opti_trials - number of optimization retries if optimization fails.
+%
+% Outputs:
+%   r              - Radial coordinates of the optimized trajectory.
+%   theta          - Angular coordinates of the optimized trajectory.
+%   x_op           - X-coordinates of the optimized trajectory.
+%   y_op           - Y-coordinates of the optimized trajectory.
+%   exitflag       - Exit flag from the optimization process (indicates success or failure).
 
+
+
+%%
 % Initalizations:
-dt=0.01; % time discretization for simulating a path between 2 anchors.
+
 arena=env.arena_dimensions; % Dimensions of the arena.
 rg_r=abs(Rs(end)-Rs(1)); % Range of radial distances.
 rg_th=abs(Ths(end)-Ths(1)); % Range of angles.
-eps=1e-2; % Small epsilon value to avoid numerical issues with
-          % thetas or phi0_0 reaching the upper and lower bounds in the 
-          % optimization problem.
-
 trials_to_optimize=0; % Counter for optimization trials.
 
 % Initial conditions for radius and angle:
@@ -47,8 +69,8 @@ opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,'D
 [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
     optimize_path_length(r0,theta0,phi0_0,arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home);
 
-% Retry optimization if it fails (up to 2 trials):
-while (exitflag<=0 && (trials_to_optimize<2))
+% Retry optimization if it fails (up to 'max_opti_trials' trials):
+while (exitflag<=0 && (trials_to_optimize<max_opti_trials))
        
         [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
          optimize_path_length(r0,theta0,phi0_0,arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home);
@@ -58,12 +80,14 @@ end
 
 % Use the best feasible solution if available:
 optimal_para=output.bestfeasible.x;
-[~]=optimizer_obj.my_loss(optimal_para,arena,rho,numel(r0),dt);
+[~]=optimizer_obj.loss(optimal_para,arena,rho,numel(r0),dt);
 
 % Handle infeasible solutions:
 if(exitflag==-2 && isempty(output.bestfeasible)) %  If the solution is infeasible 
                                                  % and no feasible solution was found.
-        error('infeasbility') % Throw an error.
+        error(['infeasbility:...' ...
+            'the initial point is out of the arena bounds or does not respect the non linear ' ...
+            'constraints. check your initial parameter vector for feasibility.']) % Throw an error.
 end
 
 % Extract optimized path coordinates:

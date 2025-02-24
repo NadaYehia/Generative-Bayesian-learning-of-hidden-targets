@@ -11,8 +11,8 @@ classdef OptimizerClass< handle
 
     methods
 
-        function total_cost=my_loss(obj,p,arena,rho,no_anchors,dt)
-            % my_loss calculates the total cost of the trajectory based on the
+        function total_cost=loss(obj,p,arena,rho,no_anchors,dt)
+            % loss calculates the total cost of the trajectory based on the
             % given parameters and constraints.
             %
             % Inputs:
@@ -24,7 +24,8 @@ classdef OptimizerClass< handle
             %
             % Outputs:
             %   total_cost: Total cost of the trajectory (sum of segment lengths).
-
+            
+            %%
             % Initialize variables:
             x_op=[]; % Optimized x-coordinates.
             y_op=[]; % Optimized y-coordinates.

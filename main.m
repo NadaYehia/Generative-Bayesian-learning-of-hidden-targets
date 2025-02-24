@@ -49,7 +49,11 @@ roi_size=7;
 draw_flg=1;
 
 % Trajectory planner parameters
-tol_radius=0.01; rho=10;
+tol_radius=0.01; rho=10; dt=0.01; 
+eps=1e-2; % Small epsilon value to avoid numerical issues with
+          % thetas or phi0_0 reaching the upper and lower bounds in the 
+          % optimization problem.
+max_opti_trials=2;
 
 % Surprise threshold
 working_mem_surprise=1;
@@ -110,7 +114,7 @@ for agent=1:ags
            % plan out (N-1) segments connecting every consecutive pairs of
            % anchors in the (N) anchors ordered list, and calculate the (r,theta)
            % mappings of every point on these segments.
-           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home);
+           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
            
            anchors_no(k)=initial_ancs;
     
@@ -173,11 +177,11 @@ for agent=1:ags
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
             else
                 r_anchors=[0, r_anchors, 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
             end
             
             prior=posterior;
@@ -197,12 +201,12 @@ for agent=1:ags
             if(anchors_no(k+1)>1)
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
                 
             else
                 r_anchors=[0 r_anchors 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
             end
     
        end

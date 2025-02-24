@@ -1,6 +1,44 @@
 
 function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length(r,theta,phi0_0,...
                                                              arena,rho,tol_radius,rg_r,rg_th,opts,dt,r_home)
+% OPTIMIZE_PATH_LENGTH - Optimizes the path length of a trajectory.
+%
+% This function uses constrained optimization to find the optimal radial distances (r),
+% angles (theta), and heading offset (phi0_0) for a set of anchor points. The optimization
+% minimizes a loss function (e.g., path length) while respecting constraints
+% on the radii, angles, and nonlinear constraints around the anchor points.
+%
+% Inputs:
+%   - r: Initial radial distances for anchor points.
+%   - theta: Initial angles for anchor points.
+%   - phi0_0: Initial heading offset.
+%   - arena: Dimensions of the arena.
+%   - rho: scaling factor of the time as function of distance.
+%   - tol_radius: Tolerance for radial deviations around anchor points.
+%   - rg_r: Range of radial distances.
+%   - rg_th: Range of angles.
+%   - opts: Optimization options (e.g., algorithm, max iterations).
+%   - dt: Time step for trajectory evaluation.
+%   - r_home: Minimum allowed radius (e.g., home position).
+%
+% Outputs:
+%   - optimal_para: Optimized parameters (radii, angles, and heading offset).
+%   - fval: Value of the objective function at the optimized parameters.
+%   - exitflag: Indicates the success or failure of the optimization.
+%   - output: Additional information about the optimization process.
+%   - lambda: Lagrange multipliers for constraints.
+%   - grad: Gradient of the objective function.
+%   - hessian: Hessian of the objective function.
+%   - optimizer_obj: Optimizer object used for computations.
+%
+% Key Steps:
+%   1. Define the number of anchor points and optimization parameters.
+%   2. Generate initial parameter vector with slight perturbations (jittering).
+%   3. Set lower and upper bounds for optimization parameters.
+%   4. Perform constrained optimization using fmincon.
+%   5. Evaluate the loss function with the optimized parameters.
+
+%%
 % Number of anchor points:
 no_anchors=numel(r);
 
@@ -47,15 +85,16 @@ ub(2+no_anchors:end)=repmat(pi,1,no_anchors); % Angles <= pi.
 ub(2+no_anchors-1)=0; % last anchor radius (Home) = 0.
 ub(2)=0; % First anchor radius (Home)= 0.
 
+%%
 % Initialize the optimizer object:
 optimizer_obj=OptimizerClass( );
 
 % Perform constrained optimization using fmincon:
-[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)optimizer_obj.my_loss(p,arena,rho,no_anchors,dt) ...
-    ,p0,[],[],[],[],lb,ub,@(p)My_r_theta_circle_cons(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th,arena),opts);
+[optimal_para,fval,exitflag,output,lambda,grad,hessian]=fmincon(@(p)optimizer_obj.loss(p,arena,rho,no_anchors,dt) ...
+    ,p0,[],[],[],[],lb,ub,@(p)non_linear_const_around_anchors(p,no_anchors,tol_radius,r0,theta0,rg_r,rg_th,arena),opts);
 
 % Evaluate the loss function with the optimized parameters:
-[~]=optimizer_obj.my_loss(optimal_para,arena,rho,no_anchors,dt);
+[~]=optimizer_obj.loss(optimal_para,arena,rho,no_anchors,dt);
 
 end
 
@@ -64,7 +103,7 @@ end
 % Non-linear constraint function to enforce a circular tolerance region around each anchor
 % in polar coordinates (r, theta) and ensure the path stays within arena boundaries.
 
-function [c,ceq]=My_r_theta_circle_cons (p,no_anchors,tol_radius,initial_anchors_r,initial_anchors_theta,rg_r,rg_th,arena)
+function [c,ceq]=non_linear_const_around_anchors(p,no_anchors,tol_radius,initial_anchors_r,initial_anchors_theta,rg_r,rg_th,arena)
 
 % Equality constraints (not used here, so empty):
 ceq=[];
