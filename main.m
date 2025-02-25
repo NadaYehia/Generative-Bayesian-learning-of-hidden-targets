@@ -74,7 +74,7 @@ draw_flg=1; % Flag to enable or disable visualization (1 = enable, 0 = disable).
 %% Trajectory planner parameters
 
 % Tolerance for radial deviations in the trajectory planner.
-tol_radius=0.01;
+tol_radius=0.02;
 
 % scaling factor of the timing function of distance.
 rho=10; 
@@ -88,12 +88,12 @@ dt=0.01;
 eps=1e-2; 
 
 % Maximum number of optimization trials if the initial attempt fails.
-max_opti_trials=2; 
+max_opti_trials=5; 
 
 %% Surprise parameters
 
 % Threshold for detecting surprising outcomes (used for resetting the prior).
-working_mem_surprise=1; 
+working_mem_surprise=0.95; 
 
 % Flag to reset the current prior to a flat one if the outcome is surprising enough.
 reset=0; 

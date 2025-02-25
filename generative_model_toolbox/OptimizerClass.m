@@ -84,8 +84,8 @@ classdef OptimizerClass< handle
             T=eucl_dist(n)/rho;
             
             % error check
-            if(~isreal(T))
-                error('Time cant be complex, sinc function is outside pi and -pi');
+            if(isnan(vmax))
+                error('check vmax calculations');
             end
             
             % Generate speed and heading profiles for the segment:
