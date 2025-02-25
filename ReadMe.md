@@ -14,7 +14,7 @@ The Environment class defines the physical properties of the arena and the targe
 - **Blocks**: The number of trials per target location.
 
  ### Methods
-- get_target_corners: A static method that takes the target centers and dimensions as input and outputs their respective corner coordinates. This is useful for visualization and collision detection.
+- setup_targets: A static method that takes the target centers and dimensions as input and outputs their respective corner coordinates. This is useful for visualization and collision detection.
 
 - Future Plans: We plan to extend this class to handle obstacles and their setup in the environment.
 
