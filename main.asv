@@ -74,7 +74,7 @@ draw_flg=1; % Flag to enable or disable visualization (1 = enable, 0 = disable).
 %% Trajectory planner parameters
 
 % Tolerance for radial deviations in the trajectory planner.
-tol_radius=0.01;
+tol_radius=0.02;
 
 % scaling factor of the timing function of distance.
 rho=10; 
@@ -88,12 +88,12 @@ dt=0.01;
 eps=1e-2; 
 
 % Maximum number of optimization trials if the initial attempt fails.
-max_opti_trials=2; 
+max_opti_trials=10; 
 
 %% Surprise parameters
 
 % Threshold for detecting surprising outcomes (used for resetting the prior).
-working_mem_surprise=1; 
+working_mem_surprise=0.95; 
 
 % Flag to reset the current prior to a flat one if the outcome is surprising enough.
 reset=0; 
@@ -111,7 +111,9 @@ delete(gcp('nocreate'))
 % Start a new parallel pool with 15 workers for parallel processing.
 parpool(15);
 
+% Start simulation timer
 tic
+
 % Simulate training on all targets for K agents.
 for agent=1:ags
 
@@ -187,8 +189,9 @@ for agent=1:ags
            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
 
            % Plan the trajectory between consecutive pairs of anchors:
-           [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
-           
+%            [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+             [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+
            % Store the number of anchors used in this trial:
            anchors_no(k)=initial_ancs;
     
@@ -274,7 +277,9 @@ for agent=1:ags
                 % If there are multiple anchors, use the TSP algorithm to find the optimal order.
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+%                 [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+
             else
                 % If there is only one anchor, append home anchors and plan the trajectory.
                 r_anchors=[0, r_anchors, 0];
@@ -299,18 +304,21 @@ for agent=1:ags
             % Call either: proportional or peak sampler to select next
             % actions.
 
-            
+            % Sample the next set of anchors based on the flat prior.
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
             r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
     
             %% F the generative model connecting a smooth trajectory through the
             % anchors samples.
+
             if(anchors_no(k+1)>1)
+                % If there are multiple anchors, use the TSP algorithm to find the optimal order.
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
                 [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
                 
             else
+                % If there is only one anchor, append home anchors and plan the trajectory.
                 r_anchors=[0 r_anchors 0];
                 theta_anchors=[0, theta_anchors, 0];
                 [rs_new,thetas_new,pos_xnew,pos_ynew,exitflg]= trajectory_planner(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,dt,eps,max_opti_trials);
@@ -318,20 +326,25 @@ for agent=1:ags
     
        end
      
+       % Visualization:
        if(draw_flg==1)
+           % Draw the current trial's details (target, trajectory, anchors, etc.).
            draw_trial(Ths,Rs,prior,theta_anchors,r_anchors,arena,targets,target_num,pos_x,pos_y);
+
+           % Clear the figure for the next trial.
            clf;
        end
     
-      % set next run's trajectories and anchors to the current output from the trajectory planner
-      pos_x=pos_xnew;
-      pos_y=pos_ynew;
-      rs_=rs_new;
-      thetas_=thetas_new;
+     % Update the trajectory and anchors for the next run:
+      pos_x=pos_xnew;  % Update the x-coordinates of the trajectory.
+      pos_y=pos_ynew;  % Update the y-coordinates of the trajectory.
+      rs_=rs_new;      % Update the radial distances of the trajectory.
+      thetas_=thetas_new;  % Update the angles of the trajectory.
     
     end
     
-    % store loops radii, heading angles and accuracies traces per model mouse agent
+    % Store loops radii, heading angles and accuracies traces from all training trials 
+    % for every model mouse agent
     r_pop_avg(agent,:) = r_loop;
     hd_pop_avg(agent,:)=om_main;
     corr_pop_avg(agent,:) = target_hit;
@@ -344,4 +357,5 @@ for agent=1:ags
 
 end
 
+% Stop simulation timer
 toc

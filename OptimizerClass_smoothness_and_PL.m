@@ -1,5 +1,5 @@
 
-classdef OptimizerClass< handle
+classdef OptimizerClass_smoothness_and_PL< handle
     properties
         optimized_x=[];
         optimized_y=[];
@@ -8,18 +8,15 @@ classdef OptimizerClass< handle
 
     methods
 
-        function total_cost=my_loss(obj,p,arena,ka,no_anchors,w1,w2,w3,dt,r0,theta0,tol_radius,...
-                rgr,rgtheta)
+        function total_cost=loss(obj,p,arena,rho,no_anchors,w1,w2,dt)
         x_op=[];
         y_op=[];
         speed_conca=[];
         heading_conca=[];
         
-        k_d0=p(1);
-%         s=no_anchors; 
-        r=p(2:2+no_anchors-1);
-%         s=no_anchors+no_anchors;
-        theta=p(2+no_anchors:end);
+        phi0_i=p(1:no_anchors-1);
+        r=p(no_anchors:2*no_anchors-1);
+        theta=p(2*no_anchors:end);
         
         for n=2:numel(r)
 
@@ -31,13 +28,13 @@ classdef OptimizerClass< handle
 %         % calculate the difference in heading angles at the anchor points.
 %         % dOmega= theta at t=1 of the current segment - theta at t=T of the 
 %         % previous segment.
-%         for n=2:numel(r)-1
-% 
-%             hd_previous=wrapToPi(heading_offset(n-1)+ k_d0(n-1));
-%             hd_next=wrapToPi(heading_offset(n)-k_d0(n));
-%             domega=wrapToPi(hd_next-hd_previous);
-%             K(n)=abs(domega);
-%         end
+        for n=2:numel(r)-1
+
+            hd_previous=wrapToPi(heading_offset(n-1)+ phi0_i(n-1));
+            hd_next=wrapToPi(heading_offset(n)-phi0_i(n));
+            domega=wrapToPi(hd_next-hd_previous);
+            K(n)=abs(domega);
+        end
 
 
 
@@ -47,38 +44,30 @@ classdef OptimizerClass< handle
         vy=(-r(n)*sin(theta(n))) +(r(n+1)*sin(theta(n+1)));
         
         if(n~=1)
-           
-       
-            % ensure continuity by setting 
-            % the offset of the current heading vector kd(n) at time t equal to the 
-            % the current heading offset - heading angle at t-1.
-             
-            last_heading_previous_seg=wrapToPi(heading_offsets(n-1)+k_d0); 
-            kd=wrapToPi(heading_offsets(n)- last_heading_previous_seg);
-            
-            k_d0(n)=wrapToPi(k_d0(n));
-            tol=abs(k_d0(n));
-            k=sign(k_d0(n));
-            epsi=((tol-pi/2));
+                       
+            phi0_i(n)=wrapToPi(phi0_i(n));
+            abs_phi0_i=abs(phi0_i(n));
+            dir_rotation=sign(phi0_i(n));
+            epsi=((abs_phi0_i-pi/2));
              
         else
             
-            k_d0(1)=wrapToPi(k_d0(1));
-            k=sign(k_d0(1));
-            tol=abs(k_d0(1));
-            epsi=((tol-pi/2));
+            phi0_i(1)=wrapToPi(phi0_i(1));
+            dir_rotation=sign(phi0_i(1));
+            abs_phi0_i=abs(phi0_i(1));
+            epsi=((abs_phi0_i-pi/2));
         end
         
         
         eucl_dist(n)=sqrt(vx^2 +vy^2);
-        vmax_n=eucl_dist(n)*((4*pi)+(4*epsi));
-        vmax_d= (pi*ka)*(sinc(epsi/pi));
-        vmax= sqrt(vmax_n/vmax_d);
+        vmax_n=rho*((4*pi)+(4*epsi));
+        vmax_d= (pi)*(sinc(epsi/pi));
+        vmax= (vmax_n/vmax_d);
         
-        T=ka*vmax;
+        T=eucl_dist(n)/rho;
         
-            if(~isreal(T))
-                error('Time cant be complex, sinc function is outside pi and -pi');
+            if(isnan(vmax))
+                error('check vmax calculations');
             end
         
         % use the functional form to produce x,y points in space
@@ -87,7 +76,7 @@ classdef OptimizerClass< handle
         
         speed= [sin(w.*t1)];
         speed= (vmax).*speed;
-        heading= ( ((4*k*tol)/T) .*t1)+( (heading_offset(n)) -(k*tol));
+        heading= ( ((4*dir_rotation*abs_phi0_i)/T) .*t1)+( (heading_offset(n)) -(dir_rotation*abs_phi0_i));
         heading=wrapToPi(heading);
         
         % calculate the x&y points of a trajectory segment
@@ -103,6 +92,7 @@ classdef OptimizerClass< handle
         pos_x=cumsum(dx);
         pos_y=cumsum(dy);
         
+        Pl(n)=( sum(vecnorm([diff(pos_x)' diff(pos_y)'],2,2)) );
 
         % confine the trajectory segment to the arena enclosure
         pos_x( find(pos_x>arena(2)) )=arena(2); 
@@ -110,7 +100,7 @@ classdef OptimizerClass< handle
         pos_y( find(pos_y>arena(4)) )=arena(4); 
         pos_y( find(pos_y<arena(3)) )=arena(3); 
         
-        Pl(n)=( sum(vecnorm([diff(pos_x)' diff(pos_y)'],2,2)) );
+        
         
         x_op=[x_op, pos_x(1:end)];
         y_op=[y_op, pos_y(1:end)];
@@ -120,32 +110,14 @@ classdef OptimizerClass< handle
         pos_y=[];
         pos_x=[];
         
-%         T_end(n)=size(t1,2);
         end
-        
-%         T_end=cumsum(T_end);
-%         obj.optimized_x=x_op;
-%         obj.optimized_y=y_op;
-%         obj.param=p;
-%         
-%         for n=2:numel(r)-1
-% 
-%             prv_seg_point=[x_op(T_end(n-1)-1), y_op(T_end(n-1)-1)];
-%             anc_pt=[x_op(T_end(n-1)),y_op(T_end(n-1))];
-%             next_seg_point=[x_op(T_end(n-1)+2), y_op(T_end(n-1)+2)];
-%             
-%             angle_entry=wrapToPi(atan2(anc_pt(2)-prv_seg_point(2),...
-%                 anc_pt(1)-prv_seg_point(1)));
-%             
-%             angle_exit=wrapToPi(atan2(next_seg_point(2)-anc_pt(2),...
-%                  next_seg_point(1)-anc_pt(1)));
-%             
-%             K(n)=abs(wrapToPi(angle_entry-angle_exit));
-% 
-%         end
+        % Store the optimized trajectory and parameters:
+        obj.optimized_x=x_op;
+        obj.optimized_y=y_op;
+        obj.param=p;
 
         % sum of anglular changes at the anchor points after arena clipping
-%         kappa=sum(K);
+         kappa=sum(K);
 
         %non-linear constraint loss
 %         cov=[(tol_radius/2)^2 0;0 (tol_radius/2)^2 ];
@@ -154,8 +126,8 @@ classdef OptimizerClass< handle
 %         nlc_loss=max(1./diag(D));
 
         % loss function= path length+ angular changes at anchor points
-        % +((w2)*kappa)+(w3*(nlc_loss-1))
-        total_cost= (w1*sum(Pl));
+        % +(w3*(nlc_loss-1))
+        total_cost= (w1*sum(Pl))+((w2)*kappa);
        
         end
 
