@@ -65,7 +65,7 @@ radii_noise_slope=c(1);
 angular_noise=0; %2.189684343307297
 
 % size of local neighborhood for peaks filtration.
-roi_size=8; 
+roi_size=5; 
 
 %% Visualization parameters
 
@@ -91,11 +91,11 @@ eps=1e-2;
 max_opti_trials=10; 
 
 % weights for path length and smoothness in the optimization objective 
-w1=1; w2=500;
+w1=1; w2=1000;
 %% Surprise parameters
 
 % Threshold for detecting surprising outcomes (used for resetting the prior).
-working_mem_surprise=0.95; 
+working_mem_surprise=0.90; 
 
 % Flag to reset the current prior to a flat one if the outcome is surprising enough.
 reset=0; 
@@ -191,7 +191,7 @@ for agent=1:ags
            [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
 
            % Plan the trajectory between consecutive pairs of anchors:
-             [rs_,thetas_,pos_x,pos_y,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+             [rs_,thetas_,pos_x,pos_y,~,trials_to_optimize]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
 
            % Store the number of anchors used in this trial:
            anchors_no(k)=initial_ancs;
@@ -261,7 +261,7 @@ for agent=1:ags
             
             % Add a small value to the posterior to avoid numerical instability
             % from repeated multiplications (e.g., probabilities going to 0)
-            epsilon = 1e-40;
+            epsilon = 1e-16;
             posterior = posterior+epsilon;
             posterior = posterior ./ nansum(posterior(:));  % Renormalize the posterior.
             
@@ -278,13 +278,13 @@ for agent=1:ags
                 % If there are multiple anchors, use the TSP algorithm to find the optimal order.
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,~,trials_to_optimize]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
 
             else
                 % If there is only one anchor, append home anchors and plan the trajectory.
                 r_anchors=[0, r_anchors, 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,~,trials_to_optimize]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
             end
             
             % Update the prior for the next trial:
@@ -315,13 +315,13 @@ for agent=1:ags
                 % If there are multiple anchors, use the TSP algorithm to find the optimal order.
                 [Gsol,~,~]=connect_anchors_tsp([ 0 r_anchors]',[ 0 theta_anchors]',anchors_no(k+1)+1,Rs,Ths);       
                 [r_anchors,theta_anchors]=reorder_actions_anchors([0 r_anchors],[ 0 theta_anchors],Gsol);
-                [rs_new,thetas_new,pos_xnew,pos_ynew,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,~,trials_to_optimize]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
 
             else
                 % If there is only one anchor, append home anchors and plan the trajectory.
                 r_anchors=[0 r_anchors 0];
                 theta_anchors=[0, theta_anchors, 0];
-                [rs_new,thetas_new,pos_xnew,pos_ynew,~]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
+                [rs_new,thetas_new,pos_xnew,pos_ynew,~,trials_to_optimize]= trajectory_planner_opt_pl_and_smoothness(r_anchors,theta_anchors,env,Ths,Rs,rho,tol_radius,r_after_home,w1,w2,dt,eps,max_opti_trials);
 
             end
     
