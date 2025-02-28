@@ -65,7 +65,7 @@ radii_noise_slope=c(1);
 angular_noise=0; %2.189684343307297
 
 % size of local neighborhood for peaks filtration.
-roi_size=5; 
+roi_size=9; 
 
 %% Visualization parameters
 
@@ -95,7 +95,7 @@ w1=1; w2=1000;
 %% Surprise parameters
 
 % Threshold for detecting surprising outcomes (used for resetting the prior).
-working_mem_surprise=0.90; 
+working_mem_surprise=0.95; 
 
 % Flag to reset the current prior to a flat one if the outcome is surprising enough.
 reset=0; 
@@ -137,7 +137,7 @@ for agent=1:ags
     r_loop=zeros(1, dd );
 
     % Array to store the mean heading (angle) for each trial.
-    om_main=zeros(1, dd );   
+    theta_main=zeros(1, dd );   
 
    % Array to store information about target hits (initially empty).
     target_hit=[]; 
@@ -198,7 +198,7 @@ for agent=1:ags
     
            % Calculate and store the mean heading and speed for plotting:
            midT=round(numel(rs_)/2);  % Midpoint of the trajectory.
-           om_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
+           theta_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
            r_loop(k)=(rs_(midT));     % Mean speed (radius) at the midpoint.
 
            % Store the anchors for this trial:
@@ -209,7 +209,7 @@ for agent=1:ags
 
             % For subsequent trials, update the mean heading and speed for plotting:
             midT=round(numel(rs_)/2); % Midpoint of the trajectory.
-            om_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
+            theta_main(k)=(thetas_(midT)); % Mean heading (angle) at the midpoint.
             r_loop(k)=(rs_(midT));     % Mean speed (radius) at the midpoint. 
 
             % Store the anchors for this trial:
@@ -347,11 +347,11 @@ for agent=1:ags
     % Store loops radii, heading angles and accuracies traces from all training trials 
     % for every model mouse agent
     r_pop_avg(agent,:) = r_loop;
-    hd_pop_avg(agent,:)=om_main;
+    hd_pop_avg(agent,:)=theta_main;
     corr_pop_avg(agent,:) = target_hit;
     anchors_no_pop(agent,:)=anchors_no;
     r_anchors_pop{agent}=r_anchors_struct;
-    om_anchors_pop{agent}=theta_anchors_struct;
+    theta_anchors_pop{agent}=theta_anchors_struct;
     caching_times(agent,:)=reset_times;
     surprise_working_agent(agent,:)=surprise_working;
     surprise_flat_agent(agent,:)=surprise_flat;

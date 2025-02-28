@@ -18,7 +18,6 @@ function [flg,Sw,Sf]=surprise(L1,outcome, current_posterior,h0,arena_home_mask)
 %   Sw: Surprise based on the current posterior.
 %   Sf: Surprise based on the flat prior.
 
-%%
 % If the outcome is 0, invert the likelihood (1 - L1)
 if(outcome==0)
  
@@ -32,14 +31,16 @@ flat_prior=arena_home_mask./(nansum(arena_home_mask(:)));
 p_flat_2d= (flat_prior.*L1);
 p_flat=nansum(p_flat_2d(:)); % Sum over all elements
 
+%% Equation 15 in Methods
 % Compute the probability of the outcome under the current posterior
 p_working_2d=current_posterior.*L1;
 p_working=nansum(p_working_2d(:)); % Sum over all elements
 
+%% Equation 16 in Methods.
 % Compute the surprise values
 Sw=-log10(p_working); % Surprise based on the current posterior
-Sf=-log10(p_flat); % Surprise based on the flat prior
 
+Sf=-log10(p_flat); % Surprise based on the flat prior
 % Determine if the surprise based on the current posterior 
 % exceeds the threshold
 flg=Sw>h0; % Flag is true if Sw exceeds h0
