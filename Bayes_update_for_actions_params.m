@@ -12,16 +12,16 @@ function [posterior]=Bayes_update_for_actions_params...
 
 
 if (target_hit==1)
-     
-    % If the target was hit, update the posterior using the likelihood L1.   
+     %% Equations 9 and (10.a)
+     % If the target was hit, update the posterior using the likelihood L1.   
      posterior=(L1).*(prior); % Multiply prior by likelihood L1.
      posterior=posterior./( nansum(posterior(:)) ); % Normalize the posterior to sum to 1.
         
          
 else
+    %% Equations 9 and (10.b)
      % If the target was missed, update the posterior using the complement 
      % of the likelihood (1 - L1).    
-
      posterior=(1-L1).*prior; % Multiply prior by (1 - L1).
      posterior=posterior./( nansum(posterior(:)) ); % Normalize the posterior to sum to 1.
         

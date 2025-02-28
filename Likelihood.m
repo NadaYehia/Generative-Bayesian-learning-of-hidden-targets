@@ -19,7 +19,6 @@ function L1= Likelihood(rs_,thetas_,sigma,Rs,Thetas)
 %   L1: Likelihood matrix computed over the grid (Rs, Thetas).
 
 
-%%
 
 % Initialize the likelihood matrix L1 with zeros
 L1=zeros(size(Thetas,2),size(Rs,2));
@@ -40,32 +39,34 @@ parfor key_pt=1:numel(rs_)
     % Initialize a temporary matrix to store the likelihood for the current key point
     temp=zeros(size(L1));
     
+    %% Argument inside the summation in Equation (13)
+
     % x and y are the action values
     % of the ith (r,theta) key point on the executed loop
     x=rs_(key_pt);
     y=thetas_(key_pt);
-
-    % Compute the normalized differences between the key point and the grid
+    % Compute the normalized differences between the key point and the
+    % grid of possible target locations in R,Theta space. we normalize the
+    % distance since Theta and R have different scales.
     dX=(x-X)/rgx;
     dY=(y-Y)/rgy;
-
     % Compute the squared distance (scaled by 1/sigma^2)
     sq_dist = ((1/(sigma^2)).*dX.^2 +...
              (1/(sigma^2)) .* dY.^2);
-
     % Compute the normalization constant for the Gaussian distribution
     N_c=1/(sqrt(2*pi)*(sigma^2));
-
     % Compute the Gaussian likelihood for the current key point
-    temp= N_c*exp(-0.5*sq_dist);
-    
+    temp= N_c*exp(-0.5*sq_dist);   
+
+    %% 
     % Store the likelihood contribution of the current key point
     L1_keypt(:,:,key_pt)=temp;
     
 end
 
+%% Equation (13) in Methods
 % Sum the likelihood contributions from all key points
-L1=(sum(L1_keypt,3));
+L1=(sum(L1_keypt,3)); 
 
 end
 
