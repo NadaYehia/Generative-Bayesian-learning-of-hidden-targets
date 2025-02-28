@@ -191,22 +191,26 @@ for n=2:no_anchors-1
             r_jitt(n)=0;
         end
 
-        % If the jittered radius is inside the home region, set it to r_home:
+        % If the jittered radius is inside the home region or just at the home boundary
+        % set it to just above r_home:
 
-        if r_jitt(n)<r_home
-            r_jitt(n)=r_home;
+        if (r_jitt(n)<=r_home || ((r_jitt(n)-r_home)<=1e-2) )
+            r_jitt(n)=r_home+(1e-2);
+
         end
 
         % Ensure the jittered angle is within valid bounds:
-        % If the jittered angle is greater than pi, set it to just below pi:
+        % If the jittered angle is greater than pi or less than pi by small value 
+        % (i.e. around pi), set it to just below pi:
 
-        if(theta_jitt(n)>=pi)
+        if( theta_jitt(n)>=pi || ( (pi-theta_jitt(n)) <=1e-2))
             theta_jitt(n)=pi-(1e-2);
         end
 
-        % If the jittered angle is less than 0, set it to just above 0:
+        % If the jittered angle is less than 0 or more than 0 by small value
+        % (i.e. around 0), set it to just above 0:
 
-        if (theta_jitt(n)<=0)
+        if (theta_jitt(n)<=0  || (theta_jitt(n)<=1e-2))
             theta_jitt(n)=0+(1e-2);
         end
 
