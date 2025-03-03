@@ -61,10 +61,10 @@ classdef OptimizerClass_smoothness_and_PL< handle
         
         eucl_dist(n)=sqrt(vx^2 +vy^2);
         vmax_n=rho*((4*pi)+(4*epsi));
-        vmax_d= (pi)*(sinc(epsi/pi));
+        vmax_d= (2*pi)*(sinc(epsi/pi));
         vmax= (vmax_n/vmax_d);
         
-        T=eucl_dist(n)/rho;
+        T=(2*eucl_dist(n))/rho;
         
             if(isnan(vmax))
                 error('check vmax calculations');
@@ -119,14 +119,6 @@ classdef OptimizerClass_smoothness_and_PL< handle
         % sum of anglular changes at the anchor points after arena clipping
          kappa=sum(K);
 
-        %non-linear constraint loss
-%         cov=[(tol_radius/2)^2 0;0 (tol_radius/2)^2 ];
-%         d_gauss_nlc=[(r-r0)/rgr;(theta-theta0)/rgtheta];
-%         D=exp(-0.5*(d_gauss_nlc)'*(inv(cov))*(d_gauss_nlc));
-%         nlc_loss=max(1./diag(D));
-
-        % loss function= path length+ angular changes at anchor points
-        % +(w3*(nlc_loss-1))
         total_cost= (w1*sum(Pl))+((w2)*kappa);
        
         end
