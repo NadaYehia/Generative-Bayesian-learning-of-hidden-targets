@@ -33,14 +33,15 @@ classdef OptimizerClass< handle
             heading_conca=[]; % Concatenated heading values.
             r=p(2:2+no_anchors-1); % Extract radii from the parameter vector.
             theta=p(2+no_anchors:end); % Extract angles from the parameter vector.
-            phi0_i=zeros(1,no_anchors-1); % Initialize heading offsets.
-            phi0_i(1)=p(1); % Set the first heading offset.
+            phi0_n=zeros(1,no_anchors-1); % Initialize heading offsets.
+            phi0_n(1)=p(1); % Set the first heading offset.
     
+            %% Equation 3
             % Calculate heading vectors between consecutive anchor points:
-            for n=2:numel(r)
+            for n=1:numel(r)-1
     
-               heading_vectors(n-1)= theta(n-1)+atan2( r(n)*sin(theta(n)-theta(n-1)),...
-                                        r(n)*cos(theta(n)-theta(n-1)) -r(n-1)  );
+               S_theta(n)= theta(n)+atan2( r(n+1)*sin(theta(n+1)-theta(n)),...
+                                        r(n+1)*cos(theta(n+1)-theta(n)) -r(n)  );
     
             end
             
@@ -48,40 +49,49 @@ classdef OptimizerClass< handle
 
             % Iterate over each segment of the trajectory: 
             for n=1:size(r,2)-1
-            % Calculate the vector between consecutive anchor points:
-            vx=(-r(n)*cos(theta(n))) +(r(n+1)*cos(theta(n+1)));
-            vy=(-r(n)*sin(theta(n))) +(r(n+1)*sin(theta(n+1)));
+          
+            %% Equation 10
+            D_x= (r(n+1)*cos(theta(n+1)))-(r(n)*cos(theta(n)));
+            
+            %% Equation 11
+            D_y= (r(n+1)*sin(theta(n+1)))-(r(n)*sin(theta(n)));
             
             % Ensure continuity of heading angles between segments:
             if(n~=1)
                 % Calculate the heading offset for the current segment:
-                last_heading_previous_seg=wrapToPi(heading_vectors(n-1)+phi0_i(n-1)); 
-                phi0_i(n)=wrapToPi(heading_vectors(n)- last_heading_previous_seg);
+                last_heading_previous_seg=wrapToPi(S_theta(n-1)+phi0_n(n-1)); 
+                phi0_n(n)=wrapToPi(S_theta(n)- last_heading_previous_seg);
                 
-                phi0_i(n)=wrapToPi(phi0_i(n));
-                abs_phi0_i=abs(phi0_i(n));
-                dir_rotation=sign(phi0_i(n));
-                epsi=((abs_phi0_i-pi/2));
+                phi0_n(n)=wrapToPi(phi0_n(n));
+                abs_phi0_n=abs(phi0_n(n));
+                dir_rotation=sign(phi0_n(n));
+                %% Equation 26
+                epsi=((abs_phi0_n-pi/2));
                  
             else
                 % Handle the first segment separately:
-                phi0_i(1)=wrapToPi(phi0_i(1));
-                dir_rotation=sign(phi0_i(1));
-                abs_phi0_i=abs(phi0_i(1));
-                epsi=((abs_phi0_i-pi/2));
+                phi0_n(1)=wrapToPi(phi0_n(1));
+                dir_rotation=sign(phi0_n(1));
+                abs_phi0_n=abs(phi0_n(1));
+                %% Equation 26
+                epsi=((abs_phi0_n-pi/2));
             end
             
             % Calculate Euclidean distance between anchor points:
-            eucl_dist(n)=sqrt(vx^2 +vy^2);
+            %% Equation 9
+            D(n)=sqrt(D_x^2 +D_y^2);
 
             % Calculate maximum speed for the segment:scale factor for the
             % sinusoidal speed function.
+
+            %% Equation 30
             vmax_n=rho*((4*pi)+(4*epsi));
-            vmax_d= (pi)*(sinc(epsi/pi));
+            vmax_d= (2*pi)*(sinc(epsi/pi));
             vmax= (vmax_n/vmax_d);
             
             % Calculate time duration to execute the segment:
-            T=eucl_dist(n)/rho;
+            %% Equation 29
+            T=(2*D(n))/rho;
             
             % error check
             if(isnan(vmax))
@@ -91,10 +101,12 @@ classdef OptimizerClass< handle
             % Generate speed and heading profiles for the segment:
             w=(2*pi)/(T);
             t1=[0:dt:T/2];
-            
+            %% Equation 31
             speed= [sin(w.*t1)];
             speed= (vmax).*speed;
-            heading= ( ((4*dir_rotation*abs_phi0_i)/T) .*t1)+( (heading_vectors(n)) -(dir_rotation*abs_phi0_i));
+
+            %% Equation 8
+            heading= ( ((4*dir_rotation*abs_phi0_n)/T) .*t1)+( (S_theta(n)) -(dir_rotation*abs_phi0_n));
             heading=wrapToPi(heading);
             
             % Calculate the x and y coordinates of the trajectory segment:
@@ -111,6 +123,7 @@ classdef OptimizerClass< handle
             pos_y=cumsum(dy);
             
             % Calculate the length of the segment:
+            %% Equation 33
             Pl(n)=( sum(vecnorm([diff(pos_x)' diff(pos_y)'],2,2)) );
             
             % Confine the segment to the arena boundaries:

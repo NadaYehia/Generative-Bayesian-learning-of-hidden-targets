@@ -43,19 +43,19 @@ theta0(theta0==pi)=pi-(eps); % Adjust angles close to pi.
 theta0(theta0==0)=0+(eps);   % Adjust angles close to zero.
 
 % Calculate the heading vectors between consecutive anchor points:
-for n=2:numel(r0)
+for n=1:numel(r0)-1
 
-    heading_vectors(n-1)= theta0(n-1)+atan2( r0(n)*sin(theta0(n)-theta0(n-1)),...
-                                    r0(n)*cos(theta0(n)-theta0(n-1)) -r0(n-1)  );
+    S_theta(n)= theta0(n)+atan2( r0(n+1)*sin(theta0(n+1)-theta0(n)),...
+                                    r0(n+1)*cos(theta0(n+1)-theta0(n)) -r0(n)  );
     
 end
 
 % initialize phi0_0 (randomly in clockwise or anti-clockwise direction
 % off the first heading vector:
 if(rand(1)>0.5)
-    phi0_0=heading_vectors(1)-eps;
+    phi0_0=S_theta(1)-eps;
 else
-    phi0_0=(-(pi-heading_vectors(1)))+eps;
+    phi0_0=(-(pi-S_theta(1)))+eps;
 end
 
 %%

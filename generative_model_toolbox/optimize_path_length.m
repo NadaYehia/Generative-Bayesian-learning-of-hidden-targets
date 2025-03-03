@@ -112,6 +112,7 @@ ceq=[];
 r_norm=(p(2:2+(no_anchors-1))-initial_anchors_r)./rg_r;
 th_norm=(p(2+no_anchors:end)-initial_anchors_theta)./rg_th;
 
+%% Equation 36
 % First non-linear constraint: Ensure the anchor points stay within a circular tolerance region.
 % The constraint is: (r_norm)^2 + (th_norm)^2 <= tol_radius^2.
 c1= ( r_norm .^2)+...
