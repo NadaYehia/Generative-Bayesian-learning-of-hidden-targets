@@ -1,17 +1,17 @@
 
-function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length_and_smoothness(r,theta,phi0_i,...
+function [optimal_para,fval,exitflag,output,lambda,grad,hessian,optimizer_obj]=optimize_path_length_and_smoothness(r,theta,phi0_n,...
                                                              arena,rho,tol_radius,rg_r,rg_th,opts,w1,w2,dt,r_home)
 % OPTIMIZE_PATH_LENGTH_AND_SMOOTHNESS - Optimizes the path length and smoothness of a trajectory.
 %
 % This function uses constrained optimization to find the optimal radial distances (r),
-% angles (theta), and heading offsets (phi0_i) for a set of anchor points. The optimization
+% angles (theta), and heading offsets (phi0_n) for a set of anchor points. The optimization
 % minimizes a loss function (trajectory path length + total angular changes at anchors points ) while respecting constraints
 % on the radii, angles, and nonlinear constraints around the anchor points.
 %
 % Inputs:
 %   - r: Initial radial distances for anchor points.
 %   - theta: Initial angles for anchor points.
-%   - phi0_i: Initial heading offsets measured from heading vectors.
+%   - phi0_n: Initial heading offsets measured from heading vectors.
 %   - arena: Dimensions of the arena.
 %   - rho: scaling factor of the time as function of distance.
 %   - tol_radius: Tolerance for radial deviations around anchor points.
@@ -63,8 +63,8 @@ theta0=theta; % Initial angles.
 % within the allowed radius of tolerance:
 [r_i,theta_i]=jitter_initial_para_vector(r0,theta0,tol_radius,rg_r,rg_th,arena,no_anchors,r_home);
 
-% Initial parameter vector: [phi0_i, r_i, theta_i]
-p0=[phi0_i,r_i, theta_i];
+% Initial parameter vector: [phi0_n, r_i, theta_i]
+p0=[phi0_n,r_i, theta_i];
 
 % check the jittered anchors satisfy the non-linear constraints
 [ci,~]=non_linear_const_around_anchors(p0,no_anchors,tol_radius,r0,theta0,rg_r,rg_th,arena);
@@ -123,6 +123,7 @@ ceq=[];
 r_norm=(p(no_anchors:2*no_anchors-1)-initial_anchors_r)./rg_r;
 th_norm=(p(2*no_anchors:end)-initial_anchors_theta)./rg_th;
 
+%% Equation 36
 % First non-linear constraint: Ensure the anchor points stay within a circular tolerance region.
 % The constraint is: (r_norm)^2 + (th_norm)^2 <= tol_radius^2.
 c1= ( r_norm .^2)+...

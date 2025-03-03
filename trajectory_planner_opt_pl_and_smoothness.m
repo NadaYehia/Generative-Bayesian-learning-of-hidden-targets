@@ -53,13 +53,13 @@ for n=2:numel(r0)
     
 end
 
-phi0_i=zeros(1,numel(r0)-1);
+phi0_n=zeros(1,numel(r0)-1);
 % initialize phi0_0 (randomly in clockwise or anti-clockwise direction
 % off the first heading vector:
 if(rand(1)>0.5)
-    phi0_i(1)=heading_vectors(1)-eps;
+    phi0_n(1)=heading_vectors(1)-eps;
 else
-    phi0_i(1)=(-(pi-heading_vectors(1)))+eps;
+    phi0_n(1)=(-(pi-heading_vectors(1)))+eps;
 end
 
 %%
@@ -71,13 +71,13 @@ opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,'D
 
 % Optimize the path length and smoothness:
 [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
-    optimize_path_length_and_smoothness(r0,theta0,phi0_i,arena,rho,tol_radius,rg_r,rg_th,opts,w1,w2,dt,r_home);
+    optimize_path_length_and_smoothness(r0,theta0,phi0_n,arena,rho,tol_radius,rg_r,rg_th,opts,w1,w2,dt,r_home);
 
 % Retry optimization if it fails (up to 'max_opti_trials' trials):
 while (exitflag<=0 && (trials_to_optimize<max_opti_trials))
        
         [optimal_para,fval,exitflag,output,~,~,~,optimizer_obj]=...
-         optimize_path_length_and_smoothness(r0,theta0,phi0_i,arena,rho,tol_radius,rg_r,rg_th,opts,w1,w2,dt,r_home);
+         optimize_path_length_and_smoothness(r0,theta0,phi0_n,arena,rho,tol_radius,rg_r,rg_th,opts,w1,w2,dt,r_home);
 
         trials_to_optimize=trials_to_optimize+1;
 end
