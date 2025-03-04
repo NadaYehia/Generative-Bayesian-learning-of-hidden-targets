@@ -43,6 +43,7 @@ theta0(theta0==pi)=pi-(eps); % Adjust angles close to pi.
 theta0(theta0==0)=0+(eps);   % Adjust angles close to zero.
 
 % Calculate the heading vectors between consecutive anchor points:
+%% Equation 3
 for n=1:numel(r0)-1
 
     S_theta(n)= theta0(n)+atan2( r0(n+1)*sin(theta0(n+1)-theta0(n)),...
