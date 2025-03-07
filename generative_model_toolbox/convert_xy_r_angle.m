@@ -1,25 +1,11 @@
 function [r, theta]=convert_xy_r_angle(x_op,y_op)
- 
-theta=[];
-r=[];
+%% this function computes the polar coordinates for points (x,y) 
+% it calculates the angle of the (x,y) points relative to the Home port
+% by shifting the coordinates angles by pi/2. 
+%%
+theta= atan2(y_op,x_op)-(pi/2); 
 
-for i=1:numel(x_op)
-
-    heading_offset= atan2(y_op(i),x_op(i)); 
-    
-    theta(i)=heading_offset-(pi/2);
-    
-    dx_=x_op(i);
-    dy_=y_op(i);
-
-    eucl_dist=sqrt(dx_^2 +dy_^2);
-
-    
-    r(i)= eucl_dist;
-
-   
-    
-end
+r=sqrt(x_op.^2 +y_op.^2);
 
 
 end
