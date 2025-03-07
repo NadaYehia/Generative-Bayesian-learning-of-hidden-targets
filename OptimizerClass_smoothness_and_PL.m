@@ -48,25 +48,14 @@ classdef OptimizerClass_smoothness_and_PL< handle
         %% Equation 11
         Dy=(-r(n)*sin(theta(n))) +(r(n+1)*sin(theta(n+1)));
         
-        if(n~=1)
                        
-            phi0_n(n)=wrapToPi(phi0_n(n));
-            abs_phi0_n=abs(phi0_n(n));
-            dir_rotation=sign(phi0_n(n));
+        phi0_n(n)=wrapToPi(phi0_n(n));
+        abs_phi0_n=abs(phi0_n(n));
+        dir_rotation=sign(phi0_n(n));
 
-            %% Equation 26
-            epsi=((abs_phi0_n-pi/2));
-             
-        else
-            
-            phi0_n(1)=wrapToPi(phi0_n(1));
-            dir_rotation=sign(phi0_n(1));
-            abs_phi0_n=abs(phi0_n(1));
-
-            %% Equation 26
-            epsi=((abs_phi0_n-pi/2));
-        end
-        
+        %% Equation 26
+        epsi=((abs_phi0_n-pi/2));
+         
         %% Equation 9
         D(n)=sqrt(Dx^2 +Dy^2);
         %% Equation 30
