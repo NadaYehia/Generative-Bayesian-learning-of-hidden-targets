@@ -46,10 +46,10 @@ theta0(theta0==0)=0+(eps); % Adjust angular values close to 0.
 
 % initialize the initial heading angle offset (phi0_0).
 if(rand(1)>0.5)
-    phi0_0=(-(theta0(2)-(pi/2)))+eps; % (clockwise direction of rotation)
+    phi0_0=wrapTo2Pi(-(theta0(2)-(pi/2))); % (clockwise direction of rotation)
                                       % and offset angle resulting in phi(0)~ 0
 else
-    phi0_0=(pi- (theta0(2)-(pi/2)) )-eps; % anticlockwise direction of rotation and offset angle resulting 
+    phi0_0=wrapTo2Pi(pi-(theta0(2)-(pi/2))); % anticlockwise direction of rotation and offset angle resulting 
                                           % in phi(0)~ pi
 end
 

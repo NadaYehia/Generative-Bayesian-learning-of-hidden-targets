@@ -54,6 +54,7 @@ classdef OptimizerClass< handle
                (r(n+1)*cos(theta(n+1)))-(r(n)*cos(theta(n))));
 
         end
+        heading_vectors=wrapTo2Pi(heading_vectors);
         
         % Generate trajectory segments between anchor points.
         for n=1:size(r,2)-1
@@ -65,38 +66,39 @@ classdef OptimizerClass< handle
             % Ensure continuity of heading offsets between segments.
             if(n~=1)
                
-                last_heading_previous_seg=wrapToPi(heading_vectors(n-1)+(pi/2)-phi0_i(n-1)); 
-                phi0_i(n)=wrapToPi((last_heading_previous_seg)-(heading_vectors(n)-(pi/2)));
+%                 last_heading_previous_seg=wrapToPi(+(pi/2)-phi0_i(n-1)); 
+                phi0_i(n)=wrapTo2Pi((pi-phi0_i(n-1))-(heading_vectors(n)-heading_vectors(n-1)));
                 
                
             else
     
                  % Wrap the initial heading offset to the range [-pi, pi].
-                phi0_i(1)=wrapToPi(phi0_i(1));
+                phi0_i(1)=wrapTo2Pi(phi0_i(1));
                 
             end
             
             % Compute the Euclidean distance between consecutive anchor points.
             eucl_dist(n)=sqrt(vx^2 +vy^2);
             
-            % Compute the maximum speed for the current segment.
-            vmax_n=rho*(pi-(2*phi0_i(n)))*(pi+(2*phi0_i(n)))*((3*pi)-(2*phi0_i(n)));
-            vmax_d= 8*(pi^2)*(cos(phi0_i(n)));
-            vmax= (vmax_n/vmax_d);
-            
             % Compute the time duration for the current segment.
             T=eucl_dist(n)/rho;
             
+            % Compute the maximum speed for the current segment.
+            vmax_n=2*rho* (((3*pi)-(2*phi0_i(n)))/T) * ((pi+(2*phi0_i(n)))/T);
+            vmax_d= (((2*pi)/T)^2)*(sinc( (pi-(2*phi0_i(n)))/(2*pi) ));
+            vmax= (vmax_n/vmax_d);
+            
+            
              % Check for invalid maximum speed.
-            if((vmax==0))
-                error('velocity is 0: check your calculations');
+            if( (vmax==0) || (sign(vmax)<0) )
+                error('velocity is 0 or negative: check your calculations');
             end
             
              % Generate speed and heading profiles for the current segment.
             
             t1=0:dt:T; % Time vector.
             speed=(1-cos((2*pi*t1)/T));  % Speed profile.
-            speed=vmax.*speed;  % Scale speed by maximum speed.
+            speed=(vmax/2).*speed;  % Scale speed by maximum speed.
 
             heading=((pi-(2*phi0_i(n)))/T).*t1 + heading_vectors(n)-(pi/2)+ phi0_i(n); % Heading profile.
             heading=wrapToPi(heading); % Wrap heading to the range [-pi, pi].

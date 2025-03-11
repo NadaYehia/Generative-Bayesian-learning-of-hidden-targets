@@ -56,7 +56,7 @@ p0=[phi0_0,r_i, theta_i];
 %% Set lower bounds on parameters:
 % - Lower bound on the first heading vector offset is 
 
-lb(1)=min([wrapTo2Pi((pi/2)-(theta0(2)-tol_radius*pi)),wrapTo2pi((1.5*pi)-(theta0(2)+tol_radius*pi))]);
+lb(1)=min([wrapTo2Pi((pi/2)-(theta0(2)-tol_radius*pi)),wrapTo2pi()]);
 
 % - Lower bounds for radial coordinates:
 % - Anchor radii are bounded below by r_home (except for the home anchor).
@@ -71,7 +71,7 @@ lb(2+no_anchors:end)=zeros(1,no_anchors);
 %% Set upper bounds on parameters:
 % - Upper bound on the first heading vector offset:
 
-ub(1)=max([wrapTo2Pi((pi/2)-(theta0(2)-tol_radius*pi)),wrapTo2pi((1.5*pi)-(theta0(2)+tol_radius*pi))]); 
+ub(1)=max([wrapTo2Pi(-(theta(2)-(pi/2))),wrapTo2pi(pi-(theta(2)-(pi/2)))]); 
 
 % - Upper bounds for radial coordinates: rg_r.
 ub(2:2+(no_anchors-1))=repmat(rg_r,1,no_anchors);
