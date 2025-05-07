@@ -1,5 +1,9 @@
-Generative Model for Learning Hidden Rewarded Locations in a Square Arena Using Bayesian Inference
-This repository contains a generative model for learning hidden rewarded locations in a square arena using Bayesian inference. The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards. The code is optimized and parallelized for fast execution.
+This repository contains a generative model for learning hidden rewarded locations in a square arena using Bayesian inference. 
+
+This codebase is an implementation for the manuscript in preparation (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
+
+The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards within tens of trials, outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
+The code is optimized and parallelized for fast execution.
 
 ## Overview
 The program starts by running main.m, which orchestrates the simulation and learning process. Below is a detailed breakdown of the key components and their functionalities:
@@ -28,32 +32,41 @@ The simulate_run function simulates the agent's movement along a given trajector
 The surprise function detects changes in the environment, such as shifts in target locations. If the observed outcome is too surprising (i.e., it deviates significantly from the agent's expectations), the agent resets its prior belief to a uniform distribution. This allows the agent to adapt to unexpected changes in the environment.
 
 ## 5. Bayes' Update for Action Parameters
-This function updates the agent's belief about the rewarding locations using Bayesian inference. It works as follows:
+The posterior map represents the agent's belief about the candidate target locations given the history of executed trajectories, their outcomes (reward or no reward), and the agent's internal model for receiving a given outcome given the current executed trajectory and that the target can be at any location within the arena. 
 
-1- Likelihood Function: The likelihood of the target location is estimated by convolving the executed trajectory (in polar coordinates) with a 2D Gaussian kernel. The sigma parameter of the Gaussian represents the agent's belief about the size of the rewarding location and the consistency of the outcome around the locations it has explored.
+1- This distribution represents the probability of any location within the arena in its polar form, its radial distance and angle relative to the home port, being the target location.
 
-2- Posterior Update: The likelihood function is used to update the agent's posterior belief about the rewarding locations. This posterior is then used to guide the agent's future actions.
+2-The likelihood function reflects the agent's belief to observe the current outcome (reward or no reward) given the executed trajectory and that any location in the arena (is or is not) the target location.
+
+3- We modeled this likelihood function as the sum of 2D Gaussian functions, each 2D function computes the probability of observing the current outcome over all the possible {R*,Theta*} locations in the arena given their Euclidean distances from the t-th point in the executed trajectory, {r_t,theta_t}.
 
 ## 6. Sampling Next Actions
-The Sampling_next_actions function represents the agent's strategy for selecting the next set of actions after updating its posterior belief. Two sampling algorithms are implemented:
-
+It determines which points to visit given the current belief about target locations:
+There is a continuum of possible sampling strategies. At one end of this axis, the agent can sample the points to visit in proportion to its belief about the candidate target locations. On the other hand, it can sample the points with peak probabilities in its current belief. 
 1- Peak Sampler: Selects actions with the highest local reward probability. This strategy focuses on exploiting the most promising areas.
 
 2- Proportional Sampler: Selects actions proportional to their reward probability in the posterior. This strategy balances exploration and exploitation.
 
-These two algorithms represent extremes of a continuum, allowing the agent to adapt its sampling strategy based on the task requirements.
-
 ## 7. Trajectory Planner
-The Trajectory_planner function is the core of the agent's generative model. It takes a list of anchors (sampled by the Sampling_next_actions function) as input and optimizes the path between them. The optimization process minimizes the path length while ensuring smoothness.
+1- This module is responsible for planning a path connecting any pair of anchors given their distances and angle relative to the home port.
+
+2- It weaves a continuous path between a list of N points, whose order of visiting is presorted to minimize the agent's total path length. 
+
+3- The planner computes the generative functions parameterizations required to generate segments between every anchor pair.
+
+4-The trajectory planner allows for an area of tolerance to hit around the anchors to minimize the total path length without sacrificing the path smoothness.
+
+5- The trajectory planner minimizes the total trajectory path length by minimizing segments' curvatures between every anchor pair and moving the anchors' locations within the area of tolerance.
+
+6- The planner cost function penalizes running longer paths, but not at the cost of running rough paths with sudden angular changes at the anchor points.
+
 
 **Key Steps**:\
-1- Anchor Optimization: The function computes the optimal heading and distances for the set of anchors.
+1- Sampler function selects the next anchor locations to run to given the agent's current belief.
 
-2- Path Generation: It generates a smooth trajectory connecting the optimized anchors.
+2- Trajectory Planner: It generates a smooth trajectory connecting the optimized anchors. This module ensures that the agent's movements are efficient and natural.
 
-3- Coordinate Transformation: The function samples {x, y} points along the path and calculates their polar coordinates {r, theta}.
-
-This module ensures that the agent's movements are efficient and natural.
+3- Bayesian belief Update: this function updates the belief about target locations given the prior belief and the likelihood of observing the current outcome given the executed trajectory.
 
 ## How to Run the Code
 Clone the repository:
