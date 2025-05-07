@@ -2,7 +2,7 @@ This repository contains a generative model for learning hidden rewarded locatio
 
 This codebase is an implementation for the manuscript in preparation (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
 
-The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards within tens of trials, outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
+The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
 The code is optimized and parallelized for fast execution.
 
 ## Overview
