@@ -1,5 +1,5 @@
 function [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler (posterior,Rs,Ths,anchors_no_int,...
-    roi_size)
+    roi_size,pThresh)
 
 % anchors_peak_sampler - Samples anchor points from the peaks of the posterior distribution.
 %                        Peaks are identified as local maxima in a 3x3 neighborhood.
@@ -75,9 +75,13 @@ true_peaks=nxt_compar_bin_posterior;
 % Find the indices of the true peaks.
 [thetas,rs]= find(true_peaks);
 
+% If peaks are found, filter them by proportion of the max posterior value  
+ lin_idx=sub2ind(size(posterior),thetas,rs);
+ lin_idx_filt=lin_idx( posterior(lin_idx) >= (pThresh*max(posterior(:))) );
+ 
 % If no peaks are found, fall back to sampling N anchors at random from the
 % posterior.
-if (isempty(rs))
+if (isempty(lin_idx_filt))
      ancs=anchors_no_int; % Use the initial number of anchors.
      temp_posterior=posterior;
      temp_posterior(isnan(temp_posterior))=0; % Handle NaN values.
@@ -95,11 +99,7 @@ if (isempty(rs))
      anchors_no=size(r_anchors,2); % Number of sampled anchors.
 
 else
-     % If peaks are found, filter them to ensure they are sufficiently
-     % spaced by picking the highest of 2 peaks if they are less than
-     % m pixels distance apart, determined by roi_size.
-     lin_idx_filt=filter_peaks_with_distance(thetas,rs,posterior,roi_size);
-
+     
      % Convert filtered linear indices back to subscripts.
      [thetas_filt,rs_filt]=ind2sub(size(posterior),lin_idx_filt);
 

@@ -12,7 +12,7 @@ function draw_trial(Ths,Rs,prior,theta_anchors,r_anchors,arena,targets,target_nu
        hold off;
        colorbar;
        f=figure(3);    
-       f.Position=[100 100 200 200];
+       %f.Position=[100 100 200 200];
        patch(arena.x,arena.y,[1 1 1]); hold on;
        patch(targets(target_num).x,targets(target_num).y,[0.85 0.9 0.9]);
        hold on, plot(pos_x',pos_y','k','LineWidth',1.5);

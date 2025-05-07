@@ -64,7 +64,7 @@ end
 
 %%
 % Optimization settings:
-MFE=10000;
+MFE=5000;
 Itrs=1000;
 opts=optimoptions("fmincon","MaxFunctionEvaluations",MFE,"MaxIterations",Itrs,'Display','notify',...
     'Algorithm','interior-point'); % Optimization options.

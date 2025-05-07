@@ -3,13 +3,13 @@ clear; clc; close all
 
 %% Target locations and sizes
 % Define the (x, y) coordinates of the target locations.
-targets_xy=[0 380;-250 290; 250 290;-152 335;152 335; ];  
+targets_xy=[0 380;-250 290; 250 290; -152 335;152 335 ];  
 
 % Define the width and height of each target.
 targets_sizes=[75 75; 75 75; 75 75; 75 75; 75 75];  
 
 % Define the order in which targets will be visited.
-target_order=[1 2 3 4 5];
+target_order=[1 2 3 4 5 ];
 
 % Define the arena boundaries as [x_min, x_max, y_min, y_max] centered about Home location (x,y).
 arena_size=[-375 375 0 750 ];
@@ -24,7 +24,7 @@ training_blcks=[100 100 100 100 100];
 
 %% Simulation parameters:
 sigma_ridge=0.075; % Likelihood sigma value in the normalized space.
-ags=50;   % number of agents to run
+ags=20;   % number of agents to run
 n=100;    % size of the posterior matrix (resolution for action space discretization).
 max_speed=839;  %maximum speed value in the action space.
 min_speed=0;     % minimum speed value in the action space
@@ -67,6 +67,7 @@ angular_noise=0; %2.189684343307297
 % size of local neighborhood for peaks filtration.
 roi_size=9; 
 
+pThresh=0.7;
 %% Visualization parameters
 
 draw_flg=1; % Flag to enable or disable visualization (1 = enable, 0 = disable).
@@ -74,7 +75,7 @@ draw_flg=1; % Flag to enable or disable visualization (1 = enable, 0 = disable).
 %% Trajectory planner parameters
 
 % Tolerance for radial deviations in the trajectory planner.
-tol_radius=0.02;
+tol_radius=0.01;
 
 % scaling factor of the timing function of distance.
 rho=10; 
@@ -88,14 +89,14 @@ dt=0.01;
 eps=1e-2; 
 
 % Maximum number of optimization trials if the initial attempt fails.
-max_opti_trials=10; 
+max_opti_trials=3; 
 
 % weights for path length and smoothness in the optimization objective 
-w1=1; w2=1000;
+w1=1; w2=500;
 %% Surprise parameters
 
 % Threshold for detecting surprising outcomes (used for resetting the prior).
-working_mem_surprise=0.95; 
+working_mem_surprise=1.1; 
 
 % Flag to reset the current prior to a flat one if the outcome is surprising enough.
 reset=0; 
@@ -250,8 +251,10 @@ for agent=1:ags
         % Store the surprise values for this run for visualization
         surprise_flat(k)=surpF; % surprise based on the flat prior
         surprise_working(k)=surpW; % surprise based on the current posterior
-    
-       if(~reset)
+        
+        
+       
+        if(~reset)
            
             %% D- Baye's update of the control actions space 
             % given the likelihood of the current outcome and the current posterior.
@@ -271,7 +274,7 @@ for agent=1:ags
 
             % Sample the next set of anchors based on the updated posterior.
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size,pThresh);
             
             %% F- Trajectory planning (same as the module in Fi above).
             if(anchors_no(k+1)>1)
@@ -306,7 +309,7 @@ for agent=1:ags
 
             % Sample the next set of anchors based on the flat prior.
             [r_anchors,theta_anchors,anchors_no(k+1)]= Sampling_next_actions(prior,sampler,initial_ancs,Rs,Ths,merging_criterion,theta_bounds,...
-            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size);
+            r_bounds,r_after_home,radii_noise_offset,radii_noise_slope,angular_noise,roi_size,pThresh);
     
             %% F the generative model connecting a smooth trajectory through the
             % anchors samples.

@@ -1,7 +1,7 @@
 
 function [r_anchors,theta_anchors,anchors_no]= Sampling_next_actions(posterior,sampler,initial_ancs,Rs,Ths,dist_criterion,theta_bounds,...
                                                                    r_bounds,r_home,radii_noise_offset,...
-                                                                   radii_noise_slope,angular_noise,roi_size)
+                                                                   radii_noise_slope,angular_noise,roi_size,pThresh)
 % Sampling_next_actions - Samples anchor points for the next actions based on the posterior distribution.
 %                         Optionally adds noise to the sampled anchors and ensures they stay within the arena bounds.
 %
@@ -33,7 +33,7 @@ if(strcmp(sampler,'proportional'))
     [r_anchors,theta_anchors,anchors_no]=anchors_prop_sampler_wnn_merge (posterior,initial_ancs,Rs,Ths,dist_criterion);
 else
     % Use peak sampling (e.g., sampling from peaks of the posterior).
-    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,Rs,Ths,initial_ancs,roi_size);
+    [r_anchors,theta_anchors,anchors_no]=anchors_peak_sampler(posterior,Rs,Ths,initial_ancs,roi_size,pThresh);
  
 end
 
