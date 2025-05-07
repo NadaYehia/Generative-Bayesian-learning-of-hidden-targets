@@ -2,7 +2,7 @@ This repository contains a generative model for learning hidden rewarded locatio
 
 This codebase is an implementation for the manuscript in preparation (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
 
-The model simulates an agent that explores the arena, learns the locations of rewarded targets, and optimizes its trajectory to maximize rewards **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
+The model simulates an agent that explores the arena, learns the locations of **uncued** rewarded locations **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
 The code is optimized and parallelized for fast execution.
 
 ## Overview
@@ -85,7 +85,19 @@ main.m
 
 ## Demo
  
+ 1- A simulation of the model learning a target. Left window shows the executed trajectories and right window shows the agent's posterior belief about target locations
+  given the executed trajectory and its outcome (reward/ target hit OR no reward/ target missed). The colormap hue represents the updated belief 
+ that a given location is the hidden target location, red scatter dots shows the anchors sampled for the next run using a peak sampler. 
 
+[comment]: <> (<video src="https://raw.githubusercontent.com/NadaYehia/Generative-Bayesian-learning-of-hidden-target/main/Demo/V1.mp4" controls width="640"></video>)
+
+[![Demo Video Thumbnail](https://img.youtube.com/vi/9O7vQaQbwuo/0.jpg)](https://youtu.be/9O7vQaQbwuo)
+
+
+2- A simulation showing how the agent detect the change in its environment and resets its prior to a flat distribution. 
+The agent learnt target 1 pretty well and localized the control parameters that intercepts it, however it will reset its belief to a flat distribution when its surprise in the current outcome given the current posterior exceeds a given surprise threshold which coincides with the experimenter switching the rewarding target location (farthest left target). This reset enables the agent to learn new targets fast and maximize its long term rewards.
+
+[![Demo Video Thumbnail](https://img.youtube.com/vi/raxOUuS0T1o/0.jpg)](https://youtu.be/raxOUuS0T1o)
 
 
 ## Dependencies
