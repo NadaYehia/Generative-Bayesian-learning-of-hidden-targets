@@ -10,7 +10,7 @@ The target locations are hidden from the animal's point of view
 
 Rewarding targets will switch locations without any cue to the animal
 
-![5_targets_tasksetup](https://github.com/user-attachments/assets/4140abb0-b611-4931-8679-b501181f6998)
+![5_targets_tasksetup](https://github.com/user-attachments/assets/fc15ab97-4dc9-4961-91a4-fa1e522b3801)
 
 The code is optimized and parallelized for fast execution.
 
