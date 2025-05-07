@@ -3,6 +3,11 @@ This repository contains a generative model for learning hidden rewarded locatio
 This codebase is an implementation for the manuscript in preparation (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
 
 The model simulates an agent that explores the arena, learns the locations of **uncued** rewarded locations **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
+The target locations are hidden from the animal's point of view
+![task_setup2](https://github.com/user-attachments/assets/f8332ff1-e263-46e4-aa6f-0eef51983428)
+Rewarding targets will switch locations without any cue to the animal
+![task_Setup](https://github.com/user-attachments/assets/3b7d7c6d-a5bb-41c4-afe8-f1b88623ea32)
+
 The code is optimized and parallelized for fast execution.
 
 ## Overview
@@ -31,7 +36,7 @@ The simulate_run function simulates the agent's movement along a given trajector
 ## 4. Surprise
 The surprise function detects changes in the environment, such as shifts in target locations. If the observed outcome is too surprising (i.e., it deviates significantly from the agent's expectations), the agent resets its prior belief to a uniform distribution. This allows the agent to adapt to unexpected changes in the environment.
 
-## 5. Bayes' Update for Action Parameters
+## 5. Belief in the candidate target locations and Bayesian update
 The posterior map represents the agent's belief about the candidate target locations given the history of executed trajectories, their outcomes (reward or no reward), and the agent's internal model for receiving a given outcome given the current executed trajectory and that the target can be at any location within the arena. 
 
 1- This distribution represents the probability of any location within the arena in its polar form, its radial distance and angle relative to the home port, being the target location.
