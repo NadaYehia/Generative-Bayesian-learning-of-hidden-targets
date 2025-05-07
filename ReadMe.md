@@ -1,6 +1,6 @@
 This repository contains a generative model for learning hidden rewarded locations in a square arena using Bayesian inference. 
 
-This codebase is an implementation for the manuscript in preparation (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
+This codebase is an implementation for the manuscript *in preparation* (**A Model for rapid spatial learning via efficient exploration and inference**) by **[Nada Abdelrahman,  Wanchen Jiang, Joshua Dudman and Ann Hermundstad]**. 
 
 The model simulates an agent that explores the arena, learns the locations of **uncued** rewarded locations **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
 The target locations are hidden from the animal's point of view
