@@ -4,10 +4,12 @@ This codebase is an implementation for the manuscript in preparation (**A Model 
 
 The model simulates an agent that explores the arena, learns the locations of **uncued** rewarded locations **within tens of trials**, thus outperforming exisiting Reinforcement Learning (RL) algorithms undergoing the same task. 
 The target locations are hidden from the animal's point of view
+
 ![task_setup2](https://github.com/user-attachments/assets/f8332ff1-e263-46e4-aa6f-0eef51983428)
 
 
 Rewarding targets will switch locations without any cue to the animal
+
 ![task_Setup](https://github.com/user-attachments/assets/3b7d7c6d-a5bb-41c4-afe8-f1b88623ea32)
 
 The code is optimized and parallelized for fast execution.
